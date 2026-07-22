@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+<meta charset="UTF-8">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: #f8f9fc;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 14px 10px 8px;
+}
+
+h1 { font-size: 1.15rem; color: #1a2744; font-weight: 700; margin-bottom: 3px; }
+.subtitle { font-size: 0.73rem; color: #667; margin-bottom: 12px; }
+
+.layout {
+  display: grid;
+  grid-template-columns: 220px 56px 220px 56px 320px;
+  align-items: center;
+  width: 100%;
+  max-width: 890px;
+  margin-bottom: 10px;
+}
+
+.panel {
+  background: white;
+  border: 2px solid #dde3f0;
+  border-radius: 10px;
+  padding: 8px;
+  text-align: center;
+}
+.panel-title {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #1a2744;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 5px;
+}
+#pop-panel  { border-color: #1a2744; }
+#samp-panel { border-color: #e07b39; }
+#dist-panel { border-color: #2a7f62; }
+
+.arrow-col {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 3px;
+}
+.arrow-label { font-size: 0.6rem; color: #888; text-align: center; max-width: 54px; line-height: 1.3; }
+
+canvas { display: block; border-radius: 5px; }
+
+.stat-box {
+  margin-top: 5px;
+  font-size: 0.68rem; color: #555;
+}
+.stat-val { font-size: 1.05rem; font-weight: 700; color: #e07b39; }
+
+.info-row {
+  display: flex; gap: 10px; justify-content: center;
+  margin-bottom: 8px; flex-wrap: wrap;
+}
+.badge {
+  background: white; border: 1.5px solid #dde3f0;
+  border-radius: 20px; padding: 3px 12px;
+  font-size: 0.7rem; color: #1a2744; font-weight: 600;
+}
+.badge span { color: #e07b39; }
+
+.btn-row { display: flex; gap: 8px; justify-content: center; margin-bottom: 8px; }
+button {
+  background: #1a2744; color: white; border: none;
+  border-radius: 6px; padding: 6px 16px;
+  font-size: 0.76rem; font-weight: 600; cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+}
+button:hover { background: #253660; transform: translateY(-1px); }
+button.secondary {
+  background: white; color: #1a2744; border: 1.5px solid #1a2744;
+}
+button.secondary:hover { background: #f0f3fa; }
+
+.caption {
+  font-size: 0.72rem; color: #444; text-align: center;
+  max-width: 760px; line-height: 1.5; min-height: 32px;
+  background: white; border: 1.5px solid #dde3f0;
+  border-radius: 8px; padding: 5px 14px;
+}
+.caption strong { color: #1a2744; }
+
+/* sample history dots */
+.sample-history {
+  display: flex; flex-wrap: wrap; gap: 3px;
+  justify-content: center; margin-top: 4px;
+  max-height: 28px; overflow: hidden;
+}
+.sh-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: rgba(42,127,98,0.35);
+  display: inline-block;
+}
+.sh-dot.new { background: #e07b39; }
+</style>
+</head>
+<body>
+
+<h1>From Population to Sampling Distribution</h1>
+<p class="subtitle">Each sample gives a slightly different slope estimate. The collection of these estimates <em>is</em> the sampling distribution.</p>
+
+<div class="layout">
+
+  <!-- Population -->
+  <div class="panel" id="pop-panel">
+    <div class="panel-title">① Population</div>
+    <canvas id="pop-canvas" width="200" height="120"></canvas>
+    <div class="stat-box">True slope <span>\({\beta}_1\) = 2.50</span></div>
+  </div>
+
+  <!-- Arrow 1 -->
+  <div class="arrow-col">
+    <svg width="50" height="40" viewBox="0 0 50 40">
+      <defs><marker id="a1" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+        <path d="M0,0 L6,3 L0,6 Z" fill="#1a2744"/>
+      </marker></defs>
+      <line x1="4" y1="20" x2="40" y2="20" stroke="#1a2744" stroke-width="2" marker-end="url(#a1)"/>
+    </svg>
+    <div class="arrow-label">draw random sample of size n=20</div>
+  </div>
+
+  <!-- Sample -->
+  <div class="panel" id="samp-panel">
+    <div class="panel-title">② One Random Sample</div>
+    <canvas id="samp-canvas" width="200" height="120"></canvas>
+    <div class="stat-box">Estimated slope <span class="stat-val" id="samp-slope">—</span></div>
+  </div>
+
+  <!-- Arrow 2 -->
+  <div class="arrow-col">
+    <svg width="50" height="40" viewBox="0 0 50 40">
+      <defs><marker id="a2" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+        <path d="M0,0 L6,3 L0,6 Z" fill="#2a7f62"/>
+      </marker></defs>
+      <line x1="4" y1="20" x2="40" y2="20" stroke="#2a7f62" stroke-width="2" marker-end="url(#a2)"/>
+    </svg>
+    <div class="arrow-label">record <span>\(\widehat{\beta}_1\)</span>, repeat many times</div>
+  </div>
+
+  <!-- Sampling distribution -->
+  <div class="panel" id="dist-panel">
+    <div class="panel-title">③ Sampling Distribution of <span>\(\widehat{\beta}_1\)</span></div>
+    <canvas id="sdist-canvas" width="300" height="120"></canvas>
+    <div class="sample-history" id="sh"></div>
+  </div>
+
+</div>
+
+<div class="info-row">
+  <div class="badge">Population N = <span>∞</span></div>
+  <div class="badge">Sample size n = <span>20</span></div>
+  <div class="badge">Samples drawn = <span id="n-drawn">0</span></div>
+  <div class="badge" style="color: #000000;">SE(<span>\(\widehat{\beta}_1\)</span>)= <span id="se-out">—</span></div>
+</div>
+
+<div class="btn-row">
+  <button id="btn-one">▶ Draw One Sample</button>
+  <button id="btn-many">⚡ Draw 200 Samples</button>
+  <button class="secondary" id="btn-reset">↺ Reset</button>
+</div>
+
+<div class="caption" id="cap">
+  Press <strong>Draw One Sample</strong> to take a random sample from the population and estimate the slope.
+</div>
+
+<script>
+const TRUE_B = 2.5, TRUE_A = 5, N_SAMP = 20;
+const C = { pop:'#1a2744', samp:'#e07b39', dist:'#2a7f62', faint:'rgba(42,127,98,0.18)', line:'#e07b39' };
+
+function randn() {
+  let u=0,v=0;
+  while(!u) u=Math.random(); while(!v) v=Math.random();
+  return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);
+}
+
+// Population: large cloud of points
+const POP_N = 300;
+const popXs = Array.from({length:POP_N}, ()=>1+Math.random()*9);
+const popYs = popXs.map(x => TRUE_A + TRUE_B*x + randn()*5);
+
+function ols(xs,ys) {
+  const n=xs.length, mx=xs.reduce((a,b)=>a+b)/n, my=ys.reduce((a,b)=>a+b)/n;
+  let num=0,den=0;
+  for(let i=0;i<n;i++){num+=(xs[i]-mx)*(ys[i]-my);den+=(xs[i]-mx)**2;}
+  return {slope:num/den, inter:my-(num/den)*mx};
+}
+
+function drawScatter(id, xs, ys, fit, color, alpha=0.5, dotR=3) {
+  const cv=document.getElementById(id), ctx=cv.getContext('2d');
+  const W=cv.width, H=cv.height;
+  ctx.clearRect(0,0,W,H);
+  const xmn=0,xmx=11,ymn=0,ymx=40;
+  const px=x=>12+(x-xmn)/(xmx-xmn)*(W-18);
+  const py=y=>H-8-(y-ymn)/(ymx-ymn)*(H-14);
+  // grid
+  ctx.strokeStyle='#eee'; ctx.lineWidth=1;
+  [10,20,30].forEach(y=>{ctx.beginPath();ctx.moveTo(12,py(y));ctx.lineTo(W-6,py(y));ctx.stroke();});
+  // axes
+  ctx.strokeStyle='#ccc'; ctx.lineWidth=1.2;
+  ctx.beginPath();ctx.moveTo(12,4);ctx.lineTo(12,H-8);ctx.lineTo(W-6,H-8);ctx.stroke();
+  // line
+  if(fit){
+    ctx.strokeStyle=color; ctx.lineWidth=2; ctx.setLineDash([]);
+    ctx.beginPath();ctx.moveTo(px(0),py(fit.inter));ctx.lineTo(px(11),py(fit.inter+fit.slope*11));ctx.stroke();
+  }
+  // dots
+  ctx.globalAlpha=alpha;
+  xs.forEach((x,i)=>{
+    ctx.beginPath(); ctx.arc(px(x),py(ys[i]),dotR,0,2*Math.PI);
+    ctx.fillStyle=color; ctx.fill();
+  });
+  ctx.globalAlpha=1;
+}
+
+function drawSampDist(slopes) {
+  const cv=document.getElementById('sdist-canvas'), ctx=cv.getContext('2d');
+  const W=cv.width, H=cv.height;
+  ctx.clearRect(0,0,W,H);
+  if(slopes.length<2) return;
+  const mn=Math.min(...slopes), mx=Math.max(...slopes);
+  // Symmetric window centred on TRUE_B so dashed line always sits in the middle
+  const halfRange = Math.max(mx - TRUE_B, TRUE_B - mn) * 1.3;
+  const lo = TRUE_B - halfRange, hi = TRUE_B + halfRange;
+  const nB=24, bins=new Array(nB).fill(0);
+  slopes.forEach(s=>{
+    const b=Math.min(nB-1,Math.floor((s-lo)/(hi-lo)*nB)); bins[b]++;
+  });
+  const mxB=Math.max(...bins);
+  const px=v=>12+(v-lo)/(hi-lo)*(W-18);
+  const py=v=>H-14-v/(mxB*1.15)*(H-20);
+  const bw=(W-18)/nB;
+  bins.forEach((b,i)=>{
+    const x=12+i*bw, y=py(b);
+    ctx.fillStyle=C.faint; ctx.fillRect(x+1,y,bw-2,H-14-y);
+    ctx.strokeStyle=C.dist; ctx.lineWidth=0.8; ctx.strokeRect(x+1,y,bw-2,H-14-y);
+  });
+  // true slope line
+  ctx.strokeStyle=C.pop; ctx.lineWidth=2; ctx.setLineDash([4,3]);
+  ctx.beginPath();ctx.moveTo(px(TRUE_B),4);ctx.lineTo(px(TRUE_B),H-14);ctx.stroke();
+  ctx.setLineDash([]);
+  // last slope
+  if(slopes.length>0){
+    const last=slopes[slopes.length-1];
+    ctx.strokeStyle=C.samp; ctx.lineWidth=2;
+    ctx.beginPath();ctx.moveTo(px(last),4);ctx.lineTo(px(last),H-14);ctx.stroke();
+  }
+  // axis
+  ctx.strokeStyle='#ccc'; ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(12,H-14);ctx.lineTo(W-6,H-14);ctx.stroke();
+  ctx.fillStyle='#888'; ctx.font='8px sans-serif'; ctx.textAlign='center';
+  [lo,(lo+hi)/2,hi].forEach(v=>ctx.fillText(v.toFixed(1),px(v),H-4));
+  // SE
+  const mean=slopes.reduce((a,b)=>a+b)/slopes.length;
+  const se=Math.sqrt(slopes.reduce((a,b)=>a+(b-mean)**2,0)/(slopes.length-1));
+  document.getElementById('se-out').textContent=slopes.length>1?se.toFixed(3):'—';
+}
+
+// State
+let slopes=[], animId=null;
+
+function init() {
+  slopes=[];
+  const popFit=ols(popXs,popYs);
+  drawScatter('pop-canvas',popXs,popYs,{slope:TRUE_B,inter:TRUE_A},C.pop,0.18,2);
+  // draw true line over faint dots
+  const cv=document.getElementById('pop-canvas'),ctx=cv.getContext('2d');
+  const W=cv.width,H=cv.height;
+  const px=x=>12+(x-0)/(11-0)*(W-18), py=y=>H-8-(y-0)/(40-0)*(H-14);
+  ctx.strokeStyle='#1a2744'; ctx.lineWidth=2.5; ctx.setLineDash([]);
+  ctx.beginPath();ctx.moveTo(px(0),py(TRUE_A));ctx.lineTo(px(11),py(TRUE_A+TRUE_B*11));ctx.stroke();
+
+  const cv2=document.getElementById('samp-canvas'),ctx2=cv2.getContext('2d');
+  ctx2.clearRect(0,0,cv2.width,cv2.height);
+  document.getElementById('samp-slope').textContent='—';
+  drawSampDist([]);
+  document.getElementById('n-drawn').textContent='0';
+  document.getElementById('se-out').textContent='—';
+  document.getElementById('sh').innerHTML='';
+  setCaption('init');
+}
+
+function drawOne() {
+  // Generate fresh xs and ys directly from the true superpopulation model
+  // so the sampling distribution is centred exactly on TRUE_B.
+  const xs = Array.from({length: N_SAMP}, () => 1 + Math.random() * 9);
+  const ys = xs.map(x => TRUE_A + TRUE_B * x + randn() * 5);
+  const fit=ols(xs,ys);
+  slopes.push(fit.slope);
+  drawScatter('samp-canvas',xs,ys,fit,C.samp,0.7,4);
+  document.getElementById('samp-slope').textContent=fit.slope.toFixed(3);
+  drawSampDist(slopes);
+  document.getElementById('n-drawn').textContent=slopes.length;
+  // history dot
+  const sh=document.getElementById('sh');
+  const dot=document.createElement('div');
+  dot.className='sh-dot new';
+  sh.appendChild(dot);
+  setTimeout(()=>dot.classList.remove('new'),400);
+  return fit.slope;
+}
+
+function setCaption(state,extra) {
+  const el=document.getElementById('cap');
+  const caps={
+    init:'Press <strong>Draw One Sample</strong> to take a random sample from the population and estimate the slope \\(\\widehat{\\beta}_1\\).',
+    one:`Drew one sample of n=20. Estimated slope \\(\\widehat{\\beta}_1 = \\) <strong>${extra}</strong>. The true slope is \\({\\beta}_1 = \\) 2.50 (dashed line). Notice the estimate isn't perfect — that's <strong>sampling variability</strong>.`,
+    many:`After ${extra} samples, the histogram shows the <strong>sampling distribution</strong> of \\(\\widehat{\\beta}_1\\). It's centered near the true β = 2.50 (dashed). Its spread is the <strong>standard error</strong> — our uncertainty about the slope.`,
+  };
+  el.innerHTML=caps[state]||'';
+  MathJax.typesetPromise([el]);
+}
+
+document.getElementById('btn-one').addEventListener('click',()=>{
+  if(animId){clearTimeout(animId);animId=null;}
+  const s=drawOne(); setCaption('one',s.toFixed(3));
+});
+
+document.getElementById('btn-many').addEventListener('click',()=>{
+  if(animId) return;
+  const target=200; let done=0;
+  function step(){
+    const batch=done<30?1:done<80?3:8;
+    for(let i=0;i<batch;i++){drawOne();done++;}
+    if(done<target) animId=setTimeout(step,done<30?100:done<80?50:20);
+    else{animId=null;setCaption('many',slopes.length);}
+  }
+  step();
+});
+
+document.getElementById('btn-reset').addEventListener('click',()=>{
+  if(animId){clearTimeout(animId);animId=null;} init();
+});
+
+init();
+</script>
+</body>
+</html>

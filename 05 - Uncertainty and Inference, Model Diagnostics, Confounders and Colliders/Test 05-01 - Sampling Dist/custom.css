@@ -1,0 +1,118 @@
+/* ── Typography ───────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@400;600;700&family=Source+Sans+3:wght@400;600&display=swap');
+
+.reveal {
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 28px;
+  color: #2c2c2c;
+  background-color: #ffffff;
+}
+
+.reveal ul li { font-size: 0.95em; }        /* top level — inherits base */
+.reveal ul ul li { font-size: 0.90em; }  /* 2nd level */
+.reveal ul ul ul li { font-size: 0.85em; } /* 3rd level */
+
+/* Screen-reader only (WCAG 1.1.1) — visually hidden, read by assistive tech */
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ── Slide headings ───────────────────────────────────────── */
+.reveal h1,
+.reveal h2,
+.reveal h3 {
+  font-family: 'Source Serif 4', serif;
+  font-weight: 700;
+  color: #1a2744;          /* dark navy, matching screenshot */
+  text-transform: none;
+  letter-spacing: -0.01em;
+  margin-bottom: 0.6em;
+}
+
+.reveal h2 {
+  font-size: 1.6em;
+  border-bottom: 2px solid #e0e0e0;
+  padding-bottom: 0.2em;
+}
+
+/* ── Bullet points ────────────────────────────────────────── */
+.reveal ul,
+.reveal ol {
+  margin-left: 1.2em;
+  line-height: 1.7;
+}
+
+.reveal ul li,
+.reveal ol li {
+  margin-bottom: 0.3em;
+}
+
+/* ── Math ─────────────────────────────────────────────────── */
+.reveal .MathJax {
+  font-size: 1.05em !important;
+}
+
+/* ── Footer ───────────────────────────────────────────────── */
+.reveal .footer {
+  font-size: 0.55em;
+  color: #888888;
+  text-align: center;
+}
+
+/* ── Slide number ─────────────────────────────────────────── */
+.reveal .slide-number {
+  font-size: 0.55em;
+  color: #aaaaaa;
+  background: transparent;
+}
+
+/* ── Code blocks ──────────────────────────────────────────── */
+.reveal pre {
+  font-size: 0.75em;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+/* ── Callout boxes ────────────────────────────────────────── */
+.reveal .callout {
+  font-size: 0.85em;
+}
+
+/* ── Tables ───────────────────────────────────────────────── */
+.reveal table {
+  font-size: 0.85em;
+  margin: 0 auto;
+  border-collapse: collapse;
+}
+
+.reveal table th {
+  background-color: #1a2744;
+  color: white;
+  padding: 0.4em 0.8em;
+}
+
+.reveal table td {
+  padding: 0.35em 0.8em;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.reveal table tr:nth-child(even) td {
+  background-color: #f7f8fc;
+}
+
+/* ── Two-column layout spacing ────────────────────────────── */
+.reveal .columns {
+  gap: 2em;
+}
+
+/* ── Text highlight ────────────────────────────── */
+.hl1 {
+  font-weight: 700;
+  color: #8b1a1a;
+}
