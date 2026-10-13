@@ -1,0 +1,503 @@
+---
+title: "Log transformations"
+subtitle: "Lecture notes"
+author: "Foundations of Regression and Predictive Modeling"
+format:
+  pdf:
+    toc: true
+    number-sections: false
+    geometry: margin=1in
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: setup
+#| include: false
+library(tidyverse)
+library(broom)
+set.seed(382)
+
+module_dir <- if (file.exists("ebola_cases.csv")) {
+  "."
+} else {
+  "modules/02_log_transformations"
+}
+```
+
+## What a straight line promises
+
+In an ordinary linear regression,
+
+$$
+y_i = \beta_0 + \beta_1x_i + e_i,
+$$
+
+the slope means an additive change:
+
+> one more unit of $x$ predicts $\beta_1$ more units of $y$.
+
+That is a strong promise. It says the same unit change applies everywhere. One more year of age changes predicted maximum heart rate by the same amount at age 25 and age 65. One more square foot changes predicted house price by the same dollar amount for small and large houses, if the model is right.
+
+Some questions are not additive. Epidemics grow by multiplication. Business errors often feel like percentages. Biological scaling often works by ratios. Logs let a straight-line model speak that language.
+
+## Exponential growth
+
+Early epidemic growth is often described by
+
+$$
+Y_t = Y_0 e^{rt}.
+$$
+
+Here:
+
+- $Y_0$ is the starting level.
+- $Y_t$ is the level after $t$ time periods.
+- $r$ is the growth rate per time period.
+- $t$ is time.
+
+In the Ebola example from lecture, the fitted model is roughly
+
+$$
+Y_t = 93.5e^{0.021t}.
+$$
+
+The growth rate is 0.021 per day. On the original scale, that is not "add 0.021 cases." It is about 2.1% growth per day.
+
+Read the data:
+
+```{r}
+#| echo: true
+ebola <- read_csv(file.path(module_dir, "ebola_cases.csv"))
+```
+
+```{r}
+#| echo: false
+#| fig-width: 7
+#| fig-height: 4.5
+ggplot(ebola, aes(day, cases)) +
+  geom_point(alpha = 0.8) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(
+    x = "Days since WHO announced the outbreak",
+    y = "Reported cases",
+    title = "Ebola cases on the original scale"
+  ) +
+  theme_minimal(base_size = 13)
+```
+
+## Logs turn multiplication into addition
+
+The useful algebra is
+
+$$
+\log(ab) = \log(a) + \log(b).
+$$
+
+Start with the exponential model:
+
+$$
+Y_t = Y_0e^{rt}.
+$$
+
+Take logs:
+
+$$
+\log(Y_t)
+=
+\log(Y_0) + rt.
+$$
+
+Now the model is a line:
+
+$$
+\log(Y_t) = \beta_0 + \beta_1t.
+$$
+
+The response is logged. The predictor is not.
+
+Fit the line after taking logs of the response:
+
+```{r}
+#| echo: false
+ebola_log_model <- lm(log(cases) ~ day, data = ebola)
+
+tidy(ebola_log_model)
+```
+
+```{r}
+#| echo: true
+#| fig-width: 7
+#| fig-height: 4.5
+ggplot(ebola, aes(day, log(cases))) +
+  geom_point(alpha = 0.8) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(
+    x = "Days since WHO announced the outbreak",
+    y = "log(reported cases)",
+    title = "Ebola cases on the log scale"
+  ) +
+  theme_minimal(base_size = 13)
+```
+
+## Interpreting a log-response slope
+
+For the Ebola case,
+
+$$
+\widehat{\log(\text{cases})}
+=
+4.53 + 0.021 \cdot \text{day}.
+$$
+
+The slope is 0.021 log units per day. Exponentiating translates it:
+
+$$
+e^{0.021} \approx 1.021.
+$$
+
+So one additional day multiplies the fitted case count by about 1.021. In ordinary language:
+
+> cases grow by about 2.1% per day.
+
+For small slopes, a log-response slope is approximately a percent change:
+
+$$
+100\beta_1 \approx \text{percent change in }y
+$$
+
+for a one-unit increase in $x$.
+
+The translation from log slope to growth rate is:
+
+```{r}
+#| echo: true
+daily_growth_rate <- coef(ebola_log_model)[["day"]]
+daily_growth_factor <- exp(daily_growth_rate)
+doubling_time <- log(2) / daily_growth_rate
+
+tibble(
+  daily_growth_rate = daily_growth_rate,
+  daily_growth_factor = daily_growth_factor,
+  percent_growth_per_day = 100 * (daily_growth_factor - 1),
+  doubling_time_days = doubling_time
+)
+```
+
+## Compounding
+
+A daily growth rate can sound small and still be brutal. A 2.1% daily growth rate over 30 days gives
+
+$$
+e^{0.021 \cdot 30}
+\approx
+1.88.
+$$
+
+That is about 88% growth over a month.
+
+The doubling time solves
+
+$$
+2 = e^{rt}.
+$$
+
+Taking logs gives
+
+$$
+t = \frac{\log(2)}{r}.
+$$
+
+With $r = 0.021$,
+
+$$
+t \approx \frac{0.693}{0.021} \approx 33
+$$
+
+days. That is the number you would say in the meeting.
+
+## What happens to residuals
+
+A log-response model is
+
+$$
+\log(y_i) = \beta_0 + \beta_1x_i + \epsilon_i.
+$$
+
+The residual is
+
+$$
+\epsilon_i
+=
+\log(y_i) - \log(\widehat{y}_i)
+=
+\log\left(\frac{y_i}{\widehat{y}_i}\right).
+$$
+
+So a log residual is a logged ratio. If the actual value is 20% above the fitted value, then
+
+$$
+\epsilon = \log(1.20).
+$$
+
+If the actual value is 20% below fitted, then
+
+$$
+\epsilon = \log(0.80).
+$$
+
+This changes the error story. A level model treats equal unit misses as comparable. A log-response model treats equal percent misses as comparable.
+
+## When logging the response makes sense
+
+Logging the response is natural when typical errors grow with the level of the outcome.
+
+Examples:
+
+- A sales forecast that misses by 100 units is small for a large store and huge for a tiny store.
+- A salary model may have larger dollar residuals for high salaries.
+- Epidemic counts tend to have uncertainty that grows as the outbreak grows.
+- House-price errors often feel more like percentage errors than fixed-dollar errors.
+
+The log transformation is not cosmetic. It changes the question and the meaning of the residuals.
+
+## The zero problem
+
+Logs require positive values:
+
+$$
+\log(12.8),\quad \log(1),\quad \log(0.29)
+$$
+
+are defined. But
+
+$$
+\log(0)
+$$
+
+is undefined, and $\log(-3)$ is not a real number.
+
+Do not add 1 because the software complained. Ask what zero means. A true zero, a rounded small value, a missing value coded as zero, and a structural impossibility are different data problems.
+
+## Log-log models
+
+Sometimes both variables live naturally on ratio scales. Then the question is:
+
+> If $x$ changes by 1%, how many percent does $y$ change?
+
+That question calls for a log-log model:
+
+$$
+\log(y_i) = \alpha + \beta\log(x_i) + e_i.
+$$
+
+The slope $\beta$ is an elasticity.
+
+## Power laws
+
+Many scaling relationships use
+
+$$
+y = Kx^\beta.
+$$
+
+For body weight and brain weight:
+
+$$
+\text{brain weight} = K(\text{body weight})^\beta.
+$$
+
+Take logs:
+
+$$
+\log(\text{brain})
+=
+\log(K) + \beta\log(\text{body}).
+$$
+
+That is a straight line on the log-log scale. The intercept is $\log(K)$. The slope is the scaling exponent.
+
+In the mammal example, the fitted slope is about 0.76:
+
+$$
+\widehat{\log(\text{brain})}
+=
+2.25 + 0.76\log(\text{body}).
+$$
+
+In words:
+
+> A 1% increase in body weight predicts about a 0.76% increase in brain weight.
+
+Read the data and fit the log-log model:
+
+```{r}
+#| echo: true
+mammals <- read_csv(file.path(module_dir, "mammal_brain_body.csv"))
+```
+
+```{r}
+#| echo: false
+#| fig-width: 7
+#| fig-height: 4.5
+ggplot(mammals, aes(body_kg, brain_g)) +
+  geom_point(alpha = 0.8) +
+  labs(
+    x = "Body weight (kg)",
+    y = "Brain weight (g)",
+    title = "Mammal brain weight and body weight"
+  ) +
+  theme_minimal(base_size = 13)
+```
+
+```{r}
+#| echo: false
+mammal_model <- lm(log(brain_g) ~ log(body_kg), data = mammals)
+
+tidy(mammal_model)
+```
+
+```{r}
+#| echo: true
+#| fig-width: 7
+#| fig-height: 4.5
+ggplot(mammals, aes(body_kg, brain_g)) +
+  geom_point(alpha = 0.8) +
+  geom_smooth(method = "lm", se = FALSE) +
+  scale_x_log10() +
+  scale_y_log10() +
+  labs(
+    x = "Body weight (kg), log scale",
+    y = "Brain weight (g), log scale",
+    title = "Mammal scaling on a log-log scale"
+  ) +
+  theme_minimal(base_size = 13)
+```
+
+Because 0.76 is less than 1, brain weight grows less than proportionally with body weight.
+
+If body weight doubles, predicted brain weight is multiplied by
+
+$$
+2^{0.76} \approx 1.69.
+$$
+
+So doubling body weight predicts about 69% more brain weight, not 100% more.
+
+```{r}
+#| echo: true
+body_weight_multiplier <- 2
+brain_weight_multiplier <- body_weight_multiplier^coef(mammal_model)[["log(body_kg)"]]
+
+brain_weight_multiplier
+```
+
+## Price elasticity
+
+A price elasticity asks:
+
+> If price rises by 1%, how much does quantity demanded change?
+
+In a randomized pricing experiment, a log-log demand model might be
+
+$$
+\widehat{\log(\text{quantity})}
+=
+10.75 - 1.59\log(\text{price}).
+$$
+
+The slope is $-1.59$. In words:
+
+> A 1% increase in price predicts about a 1.59% decrease in quantity sold.
+
+The sign matters. Demand curves usually slope down. The magnitude matters too. Because $|-1.59| > 1$, demand is elastic.
+
+Read the data and fit the elasticity model:
+
+```{r}
+#| echo: true
+pricing <- read_csv(file.path(module_dir, "pricing_experiment.csv"))
+```
+
+```{r}
+#| echo: false
+#| fig-width: 7
+#| fig-height: 4.5
+ggplot(pricing, aes(price, quantity)) +
+  geom_point(alpha = 0.8) +
+  geom_smooth(method = "lm", formula = y ~ x, se = FALSE) +
+  scale_x_log10() +
+  scale_y_log10() +
+  labs(
+    x = "Price, log scale",
+    y = "Units sold, log scale",
+    title = "Pricing experiment on a log-log scale"
+  ) +
+  theme_minimal(base_size = 13)
+```
+
+```{r}
+#| echo: true
+pricing_model <- lm(log(quantity) ~ log(price), data = pricing)
+
+tidy(pricing_model)
+```
+
+## Revenue and elasticity
+
+Revenue is
+
+$$
+\text{Revenue} = \text{Price}\times\text{Quantity}.
+$$
+
+If price rises 1% and quantity falls 1.59%, revenue changes by about
+
+$$
+1\% - 1.59\% = -0.59\%.
+$$
+
+The exact formula uses products, but this approximation is the right first read for small percentage changes.
+
+For log-log demand:
+
+$$
+\text{revenue elasticity} \approx 1 + \text{demand elasticity}.
+$$
+
+If demand elasticity is $-1.59$, revenue elasticity is about $-0.59$.
+
+```{r}
+#| echo: true
+price_elasticity <- coef(pricing_model)[["log(price)"]]
+revenue_elasticity <- 1 + price_elasticity
+
+tibble(
+  price_elasticity = price_elasticity,
+  approximate_revenue_elasticity = revenue_elasticity
+)
+```
+
+## Three common model forms
+
+| Model | Fit this | Slope means |
+|:--|:--|:--|
+| level-level | $y$ on $x$ | unit change in $y$ per unit change in $x$ |
+| log-level | $\log(y)$ on $x$ | percent change in $y$ per unit change in $x$ |
+| log-log | $\log(y)$ on $\log(x)$ | percent change in $y$ per percent change in $x$ |
+
+The fitted line may look like the same regression machinery. The interpretation changes because the variables changed.
+
+## What to carry forward
+
+Use logs when the story is naturally about multiplication, ratios, growth rates, or percentage errors.
+
+But logging is not free. A log model asks a different question:
+
+- Level models speak in units.
+- Log-response models speak in percentages of the response.
+- Log-log models speak in elasticities.
+
+The transformation is useful only if the interpretation follows it.

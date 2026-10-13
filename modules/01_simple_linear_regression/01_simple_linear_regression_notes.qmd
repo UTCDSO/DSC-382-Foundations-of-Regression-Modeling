@@ -1,0 +1,328 @@
+---
+title: "Simple linear regression"
+subtitle: "Lecture notes"
+author: "Foundations of Regression and Predictive Modeling"
+format:
+  pdf:
+    toc: true
+    number-sections: false
+    geometry: margin=1in
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: setup
+#| include: false
+library(tidyverse)
+library(broom)
+set.seed(382)
+
+module_dir <- if (file.exists("max_heart_rate.csv")) {
+  "."
+} else {
+  "modules/01_simple_linear_regression"
+}
+```
+
+## The basic problem
+
+Suppose we want to predict a person's maximum heart rate from age. A common rule is
+
+$$
+\text{maximum heart rate} = 220 - \text{age}.
+$$
+
+That rule is a line. It takes one input, age, and returns one prediction, maximum heart rate.
+
+Regression starts with the same idea, but it learns the line from data. In the lecture example, the fitted line is
+
+$$
+\widehat{\text{MHR}} = 208 - 0.7 \cdot \text{Age}.
+$$
+
+The hat on $\widehat{\text{MHR}}$ means "fitted" or "predicted." It is the model's best guess, not the person's true maximum heart rate.
+
+Read the data:
+
+```{r}
+#| echo: true
+mhr <- read_csv(file.path(module_dir, "max_heart_rate.csv"))
+```
+
+## The simple linear regression model
+
+For observation $i$, write
+
+$$
+y_i = \beta_0 + \beta_1x_i + e_i.
+$$
+
+The pieces are:
+
+- $y_i$: the response, outcome, or target.
+- $x_i$: the predictor or feature.
+- $\beta_0$: the intercept.
+- $\beta_1$: the slope.
+- $e_i$: the error or residual for observation $i$.
+
+The fitted version is
+
+$$
+\widehat{y}_i = \widehat{\beta}_0 + \widehat{\beta}_1x_i.
+$$
+
+The residual is the part left over:
+
+$$
+e_i = y_i - \widehat{y}_i.
+$$
+
+Regression is a bookkeeping system for the sentence:
+
+$$
+\text{observed value} = \text{fitted trend} + \text{leftover}.
+$$
+
+Fit the model in R:
+
+```{r}
+#| echo: true
+mhr_model <- lm(max_heart_rate ~ age, data = mhr)
+
+tidy(mhr_model)
+```
+
+Plot the data and fitted line:
+
+```{r}
+#| fig-width: 7
+#| fig-height: 4.5
+ggplot(mhr, aes(age, max_heart_rate)) +
+  geom_point(alpha = 0.45) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(
+    x = "Age",
+    y = "Maximum heart rate",
+    title = "Maximum heart rate versus age"
+  ) +
+  theme_minimal(base_size = 13)
+```
+
+## Choosing the line
+
+A line misses most data points. The question is which misses we are willing to live with.
+
+Least squares chooses the line that minimizes the sum of squared residuals:
+
+$$
+L(\beta_0,\beta_1)
+=
+\sum_{i=1}^n
+\left[y_i - (\beta_0 + \beta_1x_i)\right]^2.
+$$
+
+The fitted coefficients are
+
+$$
+(\widehat{\beta}_0,\widehat{\beta}_1)
+=
+\arg\min_{\beta_0,\beta_1} L(\beta_0,\beta_1).
+$$
+
+Squaring has two jobs. It makes positive and negative residuals count in the same direction, and it punishes large misses more than small misses. That second part matters. A point far from the line gets a loud vote.
+
+## Interpreting slope and intercept
+
+The slope is measured in units of $y$ per unit of $x$.
+
+For maximum heart rate,
+
+$$
+\widehat{\text{MHR}} = 208 - 0.7\cdot \text{Age}.
+$$
+
+The slope is $-0.7$ beats per minute per year. In words:
+
+> For each additional year of age, predicted maximum heart rate is lower by about 0.7 BPM.
+
+The intercept is $208$. Mathematically, it is the fitted value when age is zero. Substantively, that is not the part of the line we care about. A newborn on a treadmill is not the target population. Sometimes an intercept is useful. Sometimes it is just the number required to write down the line.
+
+## Prediction
+
+For Alice, age 28:
+
+$$
+\widehat{\text{MHR}}
+= 208 - 0.7(28)
+= 188.4.
+$$
+
+This does not mean Alice's true maximum heart rate is 188.4. It means 188.4 is the fitted average among people of the same age, according to this model.
+
+Prediction always has two layers:
+
+1. The fitted value says what the model expects.
+2. The residual says how far the observed case lands from that expectation.
+
+If Alice's observed maximum heart rate is 185, then
+
+$$
+e = 185 - 188.4 = -3.4.
+$$
+
+Alice is 3.4 BPM below the model's fitted value for her age.
+
+In R:
+
+```{r}
+#| echo: true
+alice <- tibble(age = 28)
+
+predict(mhr_model, newdata = alice)
+```
+
+The fitted values and residuals for the whole data set are easy to compute with `augment()`:
+
+```{r}
+#| echo: true
+mhr_augmented <- augment(mhr_model)
+```
+
+## Fair comparisons
+
+Regression is also a way to make comparisons after subtracting off a systematic pattern.
+
+Suppose:
+
+| person | age | actual MHR | fitted MHR | residual |
+|:--|--:|--:|--:|--:|
+| Alice | 28 | 185 | 188.4 | -3.4 |
+| Brianna | 55 | 174 | 169.5 | 4.5 |
+
+Alice has the higher raw maximum heart rate. Brianna has the higher residual. So Brianna is higher relative to expectation for her age.
+
+That is the fair-comparison move:
+
+$$
+\text{actual} - \text{expected}.
+$$
+
+The model supplies the expected value. The residual supplies the comparison after adjustment.
+
+Here is that comparison computed from the fitted model. The important command is `predict()`: the rest is just putting the two people in a small data frame.
+
+```{r}
+#| echo: false
+comparison <- tibble(
+  name = c("Alice", "Brianna"),
+  age = c(28, 55),
+  max_heart_rate = c(185, 174)
+) |>
+  mutate(
+    fitted = predict(mhr_model, newdata = tibble(age = age)),
+    residual = max_heart_rate - fitted
+  )
+
+comparison
+```
+
+## Decomposing variation
+
+Regression separates variation in $y$ into two parts.
+
+The fitted trend is the predictable part:
+
+$$
+\widehat{y}_i = \widehat{\beta}_0 + \widehat{\beta}_1x_i.
+$$
+
+The residual is the leftover part:
+
+$$
+e_i = y_i - \widehat{y}_i.
+$$
+
+In the heart-rate example, some variation is associated with age. Older people tend to have lower maximum heart rates. But people of the same age still differ. Regression does not erase those differences. It names them.
+
+## RMSE
+
+The root mean squared error summarizes the typical size of the residuals:
+
+$$
+\text{RMSE}
+=
+\sqrt{
+\frac{1}{n}
+\sum_{i=1}^n (y_i-\widehat{y}_i)^2
+}.
+$$
+
+For maximum heart rate, RMSE is measured in BPM. If RMSE is about 10, the fitted line typically misses a person's maximum heart rate by about 10 BPM.
+
+RMSE answers:
+
+> How far are the points from the fitted line, in the outcome's units?
+
+That unit part matters. RMSE in dollars, BPM, minutes, or test-score points has a concrete scale.
+
+Compute it from the model residuals:
+
+```{r}
+#| echo: true
+rmse <- sqrt(mean(resid(mhr_model)^2))
+rmse
+```
+
+## R-squared
+
+Before using age, a simple prediction would be the overall average:
+
+$$
+\bar{y}.
+$$
+
+After using age, the prediction is the fitted value:
+
+$$
+\widehat{y}_i.
+$$
+
+$R^2$ compares the squared error from those two prediction rules:
+
+$$
+R^2
+=
+1 -
+\frac{\sum_{i=1}^n (y_i-\widehat{y}_i)^2}
+{\sum_{i=1}^n (y_i-\bar{y})^2}.
+$$
+
+If $R^2 = 0.30$, the line reduces squared error by 30% relative to predicting everyone with the same average. It does not mean the model is correct for 30% of people. It does not mean age causes 30% of maximum heart rate. It is a summary of in-sample fit.
+
+R reports this directly, but it is worth seeing the calculation:
+
+```{r}
+#| echo: true
+glance(mhr_model) |>
+  select(r.squared, sigma)
+
+sse_line <- sum(resid(mhr_model)^2)
+sse_mean <- sum((mhr$max_heart_rate - mean(mhr$max_heart_rate))^2)
+
+1 - sse_line / sse_mean
+```
+
+## What to carry forward
+
+Simple linear regression gives us a grammar:
+
+$$
+y_i = \beta_0 + \beta_1x_i + e_i.
+$$
+
+The slope describes an average trend. The fitted value is the model's expected value at a given $x$. The residual is the observed deviation from that expectation.
+
+The deeper idea is not the line itself. The deeper idea is choosing a prediction rule by making the errors small, then using the rule to predict, summarize, compare, and decompose variation.

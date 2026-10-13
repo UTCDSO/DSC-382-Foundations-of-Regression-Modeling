@@ -1,0 +1,173 @@
+---
+title: "Statistical Uncertainty \\newline in Regression"
+subtitle: "Sampling Distribution and Standard Error"
+author: "James Scott | Abhra Sarkar | UT-Austin"
+date: ""
+format:
+  revealjs:
+    theme: default
+    self-contained: false
+    slide-number: true
+    number-sections: false
+    footer: ""
+    width: 1400
+    height: 788
+    margin: 0.1
+    fontsize: 28px
+    incremental: false
+    highlight-style: github
+    css: custom.css
+    html-math-method:
+      method: mathjax
+      url: "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js"
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+
+---
+
+## Sampling Variability
+
+:::: {.columns style="gap:0;"}
+
+::: {.column width="52%"}
+- We want to study the relationship between hours studied and exam scores.
+- We collect a random sample of 100 UT-Austin students.
+- We fit a regression: $y_{i} = \beta_{0} + \beta_{1}x_{i} + e_{i},$ where $y \equiv \text{exam scores}$ and $x \equiv \text{hours studied}.$
+- Suppose we get: $\widehat{\beta}_{1} = 2.46.$
+- Each additional hour of studying raises the predicted score by **2.46 points**.
+
+:::
+
+::: {.column width="48%"}
+![](scatter_fit.png){fig-alt="Scatter plot of exam scores (y-axis, 40 to 100) versus hours studied (x-axis, 0 to 10) for 100 students. An orange OLS regression line shows a positive linear trend. The estimated slope beta-hat-1 equals 2.46 with n equals 100." width="100%"}
+:::
+
+::::
+
+. . .
+
+**What if we had sampled a different set of 100 students — would we still get the same estimate $\widehat{\beta}_{1} = 2.46$?** 
+
+No. Our sample is just one of many possible samples from the population. A different sample would give a different $\widehat{\beta}_{1}$. 
+
+**How confident can we then be in that number $\widehat{\beta}_{1} = 2.46$?** 
+To find out, we need to quantify its [**sampling variability**]{.hl1}.
+
+. . .
+
+
+---
+
+## Sampling Distribution and Standard Error
+
+:::: {.columns}
+
+::: {.column width="45%"}
+
+* We can quantify our ['confidence']{.hl1} in our estimate $\widehat{\beta}_{1}$ by studying its [**sampling distribution**]{.hl1}.  
+
+* More specifically, we are interested in the [**variability**]{.hl1} or [**spread**]{.hl1} of the sampling distribution.
+
+* Naturally, we can measure this by the [**standard deviation**]{.hl1} of $\widehat{\beta}_{1}$ in its sampling distribution.
+
+* This is also called the [**standard error**]{.hl1} of $\widehat{\beta}_{1}$, denoted [$\text{SE}(\widehat{\beta}_{1})$]{.hl1}.
+
+::: {.callout-note icon=false appearance="simple" style="display:table; border-left: 0px solid #1a2744; padding: 0px 0 0px 0px; margin: 8px auto;"}
+$$\text{SE}(\widehat{\beta}_{1}) \equiv \text{standard deviation of } \widehat{\beta}_{1} \text{ in repeated samples}$$
+:::
+
+* Why call it an [**'error'**]{.hl1}? Because it measures the average 'error' in estimating the true ${\beta}_{1}$ across repeated samples.
+
+:::
+
+::: {.column width="50%"}
+<div role="img"
+     aria-label="Diagram: repeated samples from a population each yield a different slope estimate beta-hat-1. Their collection forms a bell-shaped sampling distribution centred at the true slope beta-1 equals 2.50.">
+  <iframe src="sampling_distribution_fig.html"
+          title="Diagram: from population to sampling distribution of the OLS slope"
+          aria-hidden="true" tabindex="-1"
+          width="100%" height="700px"
+          style="border:none; display:block; transform:scale(1.5); transform-origin:top center;"
+          sandbox="allow-scripts allow-same-origin">
+  </iframe>
+  <p class="sr-only">
+    Three-step diagram. Top: an ellipse labelled Population, true slope beta-1 = 2.50.
+    Middle: arrows to three sample boxes (Sample 1, Sample 2, Sample 3), each size n.
+    Bottom: a bell-shaped histogram labelled Sampling Distribution of beta-hat-1,
+    centred near 2.50. Its spread equals SE(beta-hat-1).
+  </p>
+</div>
+:::
+
+::::
+
+
+---
+
+## Sampling Distribution and Standard Error — Interactive Demo
+
+```{=html}
+<iframe src="demo_sampling_distribution.html"
+        width="100%"
+        height="600px"
+        style="border:none; display:block; 
+                 transform:scale(1.5); 
+                 transform-origin:top center;"
+        sandbox="allow-scripts allow-same-origin">
+</iframe>
+```
+
+
+
+
+---
+
+## Sampling Distribution -- Shape and Coverage
+
+* [**Shape:**]{.hl1} The sampling distribution of $\widehat{\beta}_{1}$ is unimodal and bell-shaped. 
+
+* [**Coverage:**]{.hl1} Approximately $95\%$ of the $\widehat{\beta}_{1}$ values fall within $[\beta_{1} \pm 2 \text{SE}(\widehat{\beta}_{1})]$ limits.
+
+<div role="img"
+     aria-label="Bell curve of the sampling distribution of beta-hat-1. Central 95 percent region between beta-1 minus 2-SE and beta-1 plus 2-SE is shaded orange. Tails of 2.5 percent each remain. Dashed line marks true beta-1 at centre.">
+  <iframe src="beta1_95pct_band.html"
+          title="Figure: 95 percent coverage interval on the sampling distribution of beta-hat-1"
+          aria-hidden="true" tabindex="-1"
+          width="100%" height="500px"
+          style="border:none; display:block; transform:scale(1); transform-origin:top center;"
+          sandbox="allow-scripts allow-same-origin">
+  </iframe>
+  <p class="sr-only">
+    Bell-shaped curve for the sampling distribution of beta-hat-1. A dashed vertical
+    line marks the true slope beta-1 at the centre. Orange shading covers the central
+    95 percent, bounded by vertical lines at beta-1 minus 2·SE and beta-1 plus 2·SE.
+    A bracket labels these limits on the x-axis. Each tail holds approximately 2.5 percent.
+  </p>
+</div>
+
+
+---
+
+## Practical Challenges
+
+* Repeated sampling from the population is essentially a [**thought experiment**]{.hl1}. 
+
+* In real life:
+
+  * We have to almost always work with [**only one sample**]{.hl1}.
+  * We cannot go back and resample from the population. 
+  * So we cannot directly observe the sampling distribution.
+
+
+. . .
+
+1. [**The classical analytical solution:**]{.hl1} Clever mathematical tricks that derive an analytical formula for the SE under strict theoretical assumptions (such as normality or a known error structure), and then estimate the SE by applying those formula to the (only) sample we have.
+
+2. [**The modern algorithmic solution:**]{.hl1} Clever computational tricks (like bootstrapping) that approximate the SE by repeatedly sampling from the (only) sample we have, and then estimate the SE empirically from all those resamples.
+
+. . .
+

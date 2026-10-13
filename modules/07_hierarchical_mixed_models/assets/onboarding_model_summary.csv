@@ -1,0 +1,9 @@
+quantity,value
+channels,24
+users,6128
+median_channel_users,157.5
+min_channel_users,31
+max_channel_users,841
+pooled_email_effect,8.00677045366917
+mixed_email_effect,6.892433108353297
+mixed_slope_sd,4.864528447787421

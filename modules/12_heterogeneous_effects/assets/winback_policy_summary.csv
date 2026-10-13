@@ -1,0 +1,4 @@
+policy,contacted_share,payoff_per_customer,payoff_per_100k
+no_offer,0,0,0
+blanket,1,4.779901732278932,477990.17322789325
+curve_targeted,0.72675,5.5225451436698325,552254.5143669832

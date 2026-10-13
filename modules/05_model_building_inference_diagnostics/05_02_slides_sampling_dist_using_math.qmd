@@ -1,0 +1,600 @@
+---
+title: "Uncertainty Quantification<br> in Regression"
+subtitle: "The Analytical Approach"
+author: "Foundations of Regression and Predictive Modeling<br>James Scott | Abhra Sarkar | UT-Austin"
+date: ""
+format:
+  revealjs:
+    theme: default
+    self-contained: false
+    slide-number: true
+    number-sections: false
+    footer: ""
+    width: 1400
+    height: 788
+    margin: 0.1
+    fontsize: 28px
+    incremental: false
+    highlight-style: github
+    css: custom.css
+    html-math-method:
+      method: mathjax
+      url: "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js"
+execute:
+  echo: false
+  warning: false
+---
+
+
+---
+
+## Analytical Solution -- Fixed x
+
+<!-- Assume that the errors are independently and identically distributed as $e_{i} \sim \mathcal{N}(0, \sigma^2)$.-->
+
+* Consider a simple linear regression $y_{i} = \beta_0 + \beta_1 x_{i} + e_{i}.$ 
+
+* Assume the errors $e_{i}$ are independently and identically distributed (iid) with mean $0$ and variance $\sigma^{2}$. 
+
+* Statistical theory then provides an exact formula for the standard errors:
+
+::: {.callout-note icon=false appearance="simple" style="display:table; border-left: 0px solid #1a2744; padding: 0px 0 0px 0px; margin: 8px auto;"}
+$$\text{SE}(\widehat{\beta}_1) = \frac{\sigma}{\sqrt{\sum_{i=1}^n (x_{i} - \bar{x})^2}} = \frac{\sigma}{\sqrt{n \text{var}(x)}} = \frac{\sigma}{\sqrt{n} s_{x}}$$
+::: 
+
+* **Key determinants:** Standard error decreases (giving us more precise estimates) when: 
+
+  * Smaller $\sigma$ (error variability): Less dispersion of the data points around the true regression line.
+
+  * Larger $n$ (sample size): More observations naturally narrow our uncertainty.
+
+  * Larger $s_{x}$ (spread of $x$): More horizontal variation in our predictor acts as a stronger lever to pin down the slope.
+
+
+
+
+
+---
+
+## Analytical Solution -- Fixed x -- Interactive Demo
+
+```{=html}
+<iframe src="demo_se_using_math_fixed_x.html"
+        width="100%"
+        height="600px"
+        style="border:none; display:block; 
+                 transform:scale(1.1); 
+                 transform-origin:top center;"
+        sandbox="allow-scripts allow-same-origin">
+</iframe>
+```
+
+
+
+
+
+
+
+
+
+---
+
+## Analytical Solution -- Random x
+
+<!-- Assume that the errors are independently and identically distributed as $e_{i} \sim \mathcal{N}(0, \sigma^2)$.-->
+
+* Consider a simple linear regression $y_{i} = \beta_0 + \beta_1 x_{i} + e_{i}.$ 
+
+* Assume the errors $e_{i}$ are independently and identically distributed (iid) with mean $0$ and variance $\sigma^{2}$. 
+
+* Statistical theory then provides an exact formula for the standard errors:
+
+::: {.callout-note icon=false appearance="simple" style="display:table; border-left: 0px solid #1a2744; padding: 0px 0 0px 0px; margin: 8px auto;"}
+$$\text{SE}(\widehat{\beta}_1) = E\left(\frac{\sigma}{\sqrt{\sum_{i=1}^n (x_{i} - \bar{x})^2}}\right) = E\left(\frac{\sigma}{\sqrt{n \text{var}(x)}}\right) = \frac{\sigma}{\sqrt{n}} E\left(\frac{1}{s_{x}}\right)$$
+::: 
+
+* **Key determinants:** Standard error decreases (giving us more precise estimates) when: 
+
+  * Smaller $\sigma$ (error variability): Less dispersion of the data points around the true regression line.
+
+  * Larger $n$ (sample size): More observations naturally narrow our uncertainty.
+
+  * Larger $E(1/s_{x})$ (spread of $x$): More horizontal variation in our predictor acts as a stronger lever to pin down the slope.
+
+
+---
+
+## Analytical Solution -- Random x -- Interactive Demo
+
+```{=html}
+<iframe src="demo_se_using_math_random_x.html"
+        width="100%"
+        height="600px"
+        style="border:none; display:block; 
+                 transform:scale(1.1); 
+                 transform-origin:top center;"
+        sandbox="allow-scripts allow-same-origin">
+</iframe>
+```
+
+
+
+
+
+---
+
+## Analytical Solution -- Practical Challenges
+
+::: {.callout-note icon=false appearance="simple" style="display:table; border-left: 0px solid #1a2744; padding: 0px 0 0px 0px; margin: 8px auto;"}
+$$\text{SE}(\widehat{\beta}_1) = \frac{\sigma}{\sqrt{\sum_{i=1}^n (x_{i} - \bar{x})^2}} = \frac{\sigma}{\sqrt{n \text{var}(x)}} = \frac{\sigma}{\sqrt{n} s_{x}}$$
+::: 
+
+:::: {.columns}
+::: {.column width="58%"}
+
+* [**Problem:**]{.hl1} $\sigma$ is also [unknown]{.hl1} -- just like $\beta_{0}$ and $\beta_{1}$. 
+
+* [**Solution:**]{.hl1} estimate error variance $\sigma^{2} = \text{var}(e)$ in the population using the residual variance $\widehat{\sigma}^{2} = \text{var}(\widehat{e})$ in the sample. 
+
+  * $\widehat{\sigma}^{2} = \text{var}(\widehat{e}) = \frac{1}{n} \sum_{i=1}^{n} \widehat{e}_{i}^{2} = \text{MSE} = \text{RMSE}^{2} = \frac{\text{RSS}}{n},$ where $\text{RSS} = \text{Resiual Sum of Squares} = \sum_{i=1}^{n} \widehat{e}_{i}^{2}$. 
+
+  * In practice, we use: $\widehat{\sigma}^{2} = \frac{\text{RSS}}{n-2}.$ 
+  
+  * (More generally, we use $\widehat{\sigma}^{2} = \frac{\text{RSS}}{n-p-1}$ when we have $p$ predictors $x_{1},\dots,x_{p}$.)
+
+:::
+
+::: {.column width="42%"}
+::: {.callout-note icon=false appearance="simple"}
+**Step 1 — Compute the Residual Sum of Squares**
+
+$$\text{RSS} = \sum_{i=1}^n \widehat{e}_i^{\,2}$$
+
+**Step 2 — Divide by the residual degrees of freedom**
+
+$$\widehat{\sigma}^2 = \frac{\text{RSS}}{n - 2}$$
+
+*(With $p$ predictors: $\widehat{\sigma}^2 = \text{RSS}/(n - p - 1)$)*
+
+**Step 3 — Plug in**
+
+$$\widehat{\text{SE}}(\widehat{\beta}_1) = \frac{\widehat{\sigma}}{\sqrt{n}\, s_{x}}$$
+:::
+:::
+::::
+
+. . . 
+
+* $\widehat{\text{SE}}(\widehat{\beta}_1)$ can now be calculated based on the (only) sample we have. 
+
+
+---
+
+## Analytical Solution -- Remaining Issues
+
+::: {.callout-note icon=false appearance="simple" style="display:table; border-left: 0px solid #1a2744; padding: 0px 0 0px 0px; margin: 8px auto;"}
+$$\widehat{\text{SE}}(\widehat{\beta}_1) = \frac{\widehat{\sigma}}{\sqrt{n} s_{x}}$$
+::: 
+
+* While $\widehat{\text{SE}}(\widehat{\beta}_1)$ can now be calculated based on the (only) sample we have, 
+  * we can only use the observed $x$ values -- calculations for random $x$ will require additional theoretical assumptions and derivations/simulations;
+  * it will now also have its own sampling fluctuations since $\widehat{\sigma}$ (as well $s_{x}$, when $x$ is random) will vary across repeated samples -- just like $\widehat{\beta}_1$ almost never exactly equals $\beta_1$, $\widehat{\text{SE}}(\widehat{\beta}_1)$ will not exactly equal ${\text{SE}}(\widehat{\beta}_1)$.
+
+
+
+
+---
+
+## Standard Error -- Real Data Illustration: `cars`
+
+Let's model the relationship between speed ($x$, in mph) and stopping distance ($y$, in ft) using simple linear regression:
+$$dist_{i} = \beta_{0} + \beta_{1}speed_{i} + \epsilon_{i}$$
+
+
+```{r}
+#| echo: false
+#| eval: true
+#| comment: ""
+#| cache: false
+#| fig-height: 4.5
+#| fig-width: 8
+#| out-width: "100%"
+#| fig-align: center
+
+# load data
+data(cars)
+
+# fit model
+model <- lm(dist ~ speed, data = cars)
+
+# plot data
+plot(cars$speed, cars$dist, pch=16,
+  xlab = "Speed (mph)",
+  ylab = "Stopping Distance (ft)")
+
+# add fit
+abline(model, col = "red")
+```
+
+
+
+
+
+---
+
+## Standard Error -- Real Data Illustration: `cars`
+
+Let's model the relationship between speed ($x$, in mph) and stopping distance ($y$, in ft) using simple linear regression:
+$$dist_{i} = \beta_{0} + \beta_{1}speed_{i} + \epsilon_{i}$$
+
+:::: {.columns}
+::: {.column style="width:40%; font-size: 0.7em;"}
+```{r}
+#| echo: true
+#| eval: false
+#| comment: ""
+#| fig-height: 4.5
+#| fig-width: 6
+#| out-width: "65%"
+#| fig-align: center
+
+# load data
+data(cars)
+
+# plot data
+plot(cars$speed, cars$dist, pch=16,
+  xlab = "Speed (mph)",
+  ylab = "Stopping Distance (ft)")
+
+# fit model
+model <- lm(dist ~ speed, data = cars)
+
+# add fit
+abline(model, col = "red")
+
+# summarize model
+summary(model)
+
+# check SE(beta_1_hat) with formula
+n = length(cars$dist) # sample size
+cat("RSE:", sqrt((sum(model$res^2)/(n-2)))) # \sigma_hat = sqrt(RSS/(n-2))
+cat("SE(beta_1_hat):", sqrt((sum(model$res^2)/(n-2))/(n*var(cars$speed))))
+```
+:::
+
+::: {.column style="width:10%; font-size: 0.7em;"}
+:::
+
+::: {.column style="width:45%; font-size: 0.7em;"}
+```{r}
+#| echo: false
+#| eval: true
+#| comment: ""
+#| fig-align: center
+summary(model)
+
+n = length(cars$dist)
+cat("RSE:", sqrt((sum(model$res^2)/(n-2)))) # \sigma_hat = sqrt(RSS/(n-2))
+cat("SE(beta_1_hat):", sqrt((sum(model$res^2)/(n-2))/(n*var(cars$speed))))
+```
+:::
+::::
+
+
+<!--. . .
+* The analytical approach extends to obtaining the standard error of the intercept. 
+* More generally, the approach extends to obtaining standard errors in a multiple linear regression model.-->
+
+
+
+
+
+---
+
+## Standard Error -- Real Data Illustration: `mtcars`
+
+Let's model how a car's mileage ($y \equiv$ `mpg`) varies with its weight ($x_1 \equiv$ `wt`), horsepower ($x_2 \equiv$`hp`), cylinders ($x_3 \equiv$`cyl`), displacement ($x_4 \equiv$`disp`) using multiple linear regression and the `mtcars` data set $(n=32)$ in `R`:
+$$y_{i} = \beta_{0} + \beta_{1}x_{1,i} + \beta_{2}x_{2,i} + \beta_{3}x_{3,i} + \beta_{4}x_{4,i} + \epsilon_{i}$$
+
+:::: {.columns}
+::: {.column style="width:40%; font-size: 0.7em;"}
+```{r}
+#| echo: true
+#| eval: false
+#| comment: ""
+
+# load data
+data(mtcars)
+
+# fit model
+model <- lm(mpg ~ wt + hp + cyl + disp, data = mtcars)
+
+# summarize model
+summary(model)
+```
+:::
+
+::: {.column style="width:10%; font-size: 0.7em;"}
+:::
+
+::: {.column style="width:45%; font-size: 0.7em;"}
+```{r}
+#| echo: false
+#| eval: true
+#| comment: ""
+
+# load data
+data(mtcars)
+
+# fit model
+model <- lm(mpg ~ wt + hp + cyl + disp, data = mtcars)
+
+# summarize model
+summary(model)
+```
+:::
+::::
+
+
+
+
+---
+
+## From Standard Errors to Confidence Intervals
+
+<!--Our sample slope $\widehat{\beta}_{1}$ is a single guess (a point estimate).--> 
+* For any given sample, the estimated slope $\widehat{\beta}_{1}$ will almost certainly not equal the true slope $\beta_{1}$.
+* Reporting just the point estimate $\widehat{\beta}_{1}$ is thus not enough. 
+* We can report the [standard error]{.hl1} $\widehat{\text{SE}}(\widehat{\beta}_{1})$, which measures the variability of $\widehat{\beta}_{1}$ across repeated samples.
+* We can also report a [confidence interval]{.hl1} for $\beta_{1}$, which provides a plausible range of values for $\beta_{1}$.
+
+* We previously made the following two observations about the sampling distribution of $\widehat{\beta}_{1}$:
+
+  * [**Shape:**]{.hl1} The sampling distribution of $\widehat{\beta}_{1}$ is unimodal and bell-shaped. 
+
+  * [**Coverage:**]{.hl1} Approximately $95\%$ of the time $\widehat{\beta}_{1} \in [\beta_{1} \pm 2 \text{SE}(\widehat{\beta}_{1})]$.
+
+
+* We can exploit these observations to construct an approximate $95\%$ confidence interval for $\beta_{1}$ as:
+
+::: {.callout-note icon=false appearance="simple" style="display:table; border-left: 0px solid #1a2744; padding: 0px 0 0px 0px; margin: 8px auto;"}
+$$
+95\% \text{ CI for } \beta_{1}: [\widehat{\beta}_{1} \pm 2 \times \widehat{\text{SE}}(\widehat{\beta}_{1})]
+$$
+:::
+
+
+
+
+
+
+
+
+
+---
+
+## Confidence Intervals -- Interpretation
+
+::: {.callout-note icon=false appearance="simple" style="display:table; border-left: 0px solid #1a2744; padding: 0px 0 0px 0px; margin: 8px auto;"}
+$$
+95\% \text{ CI for } \beta_{1}: [\widehat{\beta}_{1} \pm 2 \times \widehat{\text{SE}}(\widehat{\beta}_{1})]
+$$
+:::
+
+* **What does "95% Confidence" actually mean here?**
+
+  * If we collect $100$ independent samples and construct a $95\%$ confidence interval for each, **approximately $95$ of those intervals** will capture the true population parameter $\beta_{1}$. 
+
+  * It is the *interval* that is random, not the population parameter!
+
+<!--::: {.callout-note icon=false appearance="simple" style="display:table; border-left: 0px solid #1a2744; padding: 0px 0 0px 0px; margin: 8px auto;"}-->
+<!--:::-->
+
+
+* **What are the key trade-offs?**
+
+  * **To be more confident (>$95\%$):** We must increase the length of the interval with a larger multiplier ($>2$).
+  * **To get a narrower interval (more precision):** We need a smaller standard error (which we get from a larger $n$, lower error variability $\sigma$, or wider spread of x-values $s_x$).
+
+
+
+
+---
+
+## Confidence Intervals -- Analytical Solution 
+
+* First, we can use the analytical approach to estimating ${\text{SE}}(\widehat{\beta}_{1})$. 
+ 
+* Second, we can use additional theoretical assumptions and derivations to refine the  formula for confidence intervals.
+
+* Specifically, if we assume
+
+  * $e_{i}$ are iid with mean $0$ and (unknown) variance $\sigma^{2}$ ([original assumption]{.hl1}),
+  * $e_{i}$ are normally distributed ([new assumption]{.hl1}),
+  
+  the formula for $95\%$ confidence interval for $\beta_1$ can refined as 
+  
+::: {.callout-note icon=false appearance="simple" style="display:table; border-left: 0px solid #1a2744; padding: 0px 0 0px 0px; margin: 8px auto;"}
+$$
+95\% \text{ CI for } \beta_{1}: [\widehat{\beta}_{1} \pm t_{n-2,0.025}^{*} \times \widehat{\text{SE}}(\widehat{\beta}_{1})]
+$$
+:::  
+
+* Here $t^{*}_{df,\alpha}$ is the upper $\alpha\%$ critical value from a $t$-distribution with degrees of freedom $df$. 
+    * For simple linear regression with one predictor $x$, $df = n-2$.
+    * (For multiple linear regression with $p$ predictors $x_{1},\dots,x_{p}$, $df = n-p-1$.)
+    * For large $n$, $t$-distribution closely resembles a normal distribution and $t^* \approx 1.96$.
+
+
+
+---
+
+## Confidence Interval -- Interactive Demo
+
+```{=html}
+<iframe src="demo_confidence_interval.html"
+        width="100%"
+        height="600px"
+        style="border:none; display:block; 
+                 transform:scale(1.3); 
+                 transform-origin:top center;"
+        sandbox="allow-scripts allow-same-origin">
+</iframe>
+```
+
+
+
+
+
+
+---
+
+## Confidence Interval -- Real Data Illustration: `cars`
+
+Let's model the relationship between speed ($x$, in mph) and stopping distance ($y$, in ft) using simple linear regression:
+$$dist_{i} = \beta_{0} + \beta_{1}speed_{i} + \epsilon_{i}$$
+
+:::: {.columns}
+::: {.column style="width:40%; font-size: 0.7em;"}
+```{r}
+#| echo: true
+#| eval: false
+#| comment: ""
+#| fig-height: 4.5
+#| fig-width: 6
+#| out-width: "65%"
+#| fig-align: center
+
+# load data
+data(cars)
+
+# fit model
+model <- lm(dist ~ speed, data = cars)
+
+# estimates
+model$coefficients
+
+# confidence interval
+confint(model) # default 95%
+confint(model, level=0.99) # level changed to 99%
+```
+:::
+
+::: {.column style="width:10%; font-size: 0.7em;"}
+:::
+
+::: {.column style="width:45%; font-size: 0.7em;"}
+```{r}
+#| echo: false
+#| eval: true
+#| comment: ""
+#| fig-height: 2.5
+#| fig-width: 6
+#| out-width: "70%"
+#| fig-align: center
+# load data
+data(cars)
+
+# fit model
+model <- lm(dist ~ speed, data = cars)
+
+# estimates
+model$coefficients
+
+# confidence interval
+confint(model) # default 95%
+confint(model, level=0.99) # level 99%
+```
+
+<br>
+
+* A $95\%$ CI for $\beta_{1}$: $[3.097,4.768]$
+
+* A $99\%$ CI for $\beta_{1}$: $[2.818,5.047]$
+
+:::
+::::
+
+
+
+
+---
+
+## Confidence Interval -- Real Data Illustration: `mtcars`
+
+Let's model how a car's mileage ($y \equiv$ `mpg`) varies with its weight ($x_1 \equiv$ `wt`), horsepower ($x_2 \equiv$`hp`), cylinders ($x_3 \equiv$`cyl`), displacement ($x_4 \equiv$`disp`) using multiple linear regression and the `mtcars` data set $(n=32)$ in `R`:
+$$y_{i} = \beta_{0} + \beta_{1}x_{1,i} + \beta_{2}x_{2,i} + \beta_{3}x_{3,i} + \beta_{4}x_{4,i} + \epsilon_{i}$$
+
+:::: {.columns}
+::: {.column style="width:40%; font-size: 0.7em;"}
+```{r}
+#| echo: true
+#| eval: false
+#| comment: ""
+
+# load data
+data(mtcars)
+
+# fit model
+model <- lm(mpg ~ wt + hp + cyl + disp, data = mtcars)
+
+# estimates
+model$coeff
+
+# confidence interval
+confint(model) # default 95%
+```
+:::
+
+::: {.column style="width:10%; font-size: 0.7em;"}
+:::
+
+::: {.column style="width:45%; font-size: 0.7em;"}
+```{r}
+#| echo: false
+#| eval: true
+#| comment: ""
+
+# load data
+data(mtcars)
+
+# fit model
+model <- lm(mpg ~ wt + hp + cyl + disp, data = mtcars)
+
+# estimates
+model$coeff
+
+# confidence interval
+confint(model) # default 95%
+```
+:::
+::::
+
+
+
+
+---
+
+## Uncertainty Quantification -- Analytical Solution -- Pros and Cons
+
+:::: {.columns}
+::: {.column width="50%"}
+**Strengths**
+
+- Exact under the stated assumptions
+- Fast — no simulation needed
+- Foundation of classical $t$-tests and $F$-tests
+- Widely implemented in all statistical software
+:::
+
+::: {.column width="50%"}
+**Limitations**
+
+- Requires [**homoscedasticity**]{.hl1} (constant $\sigma^2$)
+- Requires [**normality**]{.hl1} of errors
+- Breaks down with [**correlated errors**]{.hl1}
+- Can be unreliable in [**small samples**]{.hl1}
+:::
+::::
+
+

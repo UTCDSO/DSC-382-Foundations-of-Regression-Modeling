@@ -1,0 +1,11 @@
+quantity,value
+accounts,140
+customer_months,3203
+median_account_months,14
+min_account_months,3
+max_account_months,70
+poisson_log_seat_slope,0.7661778228559369
+poisson_slope_sd,0.45451706188011254
+poisson_overdispersion_ratio,2.353483203792763
+olre_log_seat_slope,0.7565653714827446
+olre_observation_sd,0.5419235783187701

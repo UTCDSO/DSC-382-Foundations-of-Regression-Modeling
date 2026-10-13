@@ -1,0 +1,10 @@
+quantity,value
+physicians,75
+visits,10840
+median_physician_visits,46
+min_physician_visits,3
+max_physician_visits,595
+lm_checklist_effect,-0.16742935363876568
+mixed_checklist_effect,-0.16799253351070115
+mixed_physician_sd,0.2754663088000292
+mixed_residual_sd,0.384320685798747

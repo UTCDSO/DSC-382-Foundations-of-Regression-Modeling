@@ -1,0 +1,13 @@
+Hub,TerminalChange,connections,make_rate,median_scheduled,median_arrival_delay
+ATL,Same terminal,994,0.8853118712273642,58,-1
+ATL,Terminal change,562,0.9110320284697508,64,0
+CLT,Same terminal,896,0.8761160714285714,57,-1
+CLT,Terminal change,241,0.9128630705394191,69,0
+DFW,Same terminal,724,0.8812154696132597,57,0
+DFW,Terminal change,653,0.9295558958652373,64,-0
+DEN,Same terminal,718,0.883008356545961,60,0
+DEN,Terminal change,318,0.8647798742138365,62,-0.5
+ORD,Same terminal,712,0.797752808988764,58,1
+ORD,Terminal change,459,0.7450980392156863,65,1
+IAH,Same terminal,591,0.8460236886632826,59,1
+IAH,Terminal change,332,0.8162650602409639,64,0

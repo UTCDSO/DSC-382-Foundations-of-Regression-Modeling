@@ -1,0 +1,11 @@
+quantity,value
+reviewers,185
+assignments,3489
+median_reviewer_assignments,9
+min_reviewer_assignments,1
+max_reviewer_assignments,90
+pooled_page_exponent,1.0541753481860674
+mixed_page_exponent,1.047393740090598
+mixed_page_exponent_sd,0.14044427390877712
+mixed_reviewer_intercept_sd,0.3309878585849544
+mixed_residual_sd,0.35195401878648064

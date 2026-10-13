@@ -1,0 +1,410 @@
+---
+title: "Uncertainty Quantification<br> in Regression"
+subtitle: "The Computational Approach"
+author: "Foundations of Regression and Predictive Modeling<br>James Scott | Abhra Sarkar | UT-Austin"
+date: ""
+format:
+  revealjs:
+    theme: default
+    self-contained: false
+    slide-number: true
+    number-sections: false
+    footer: ""
+    width: 1400
+    height: 788
+    margin: 0.1
+    fontsize: 28px
+    incremental: false
+    highlight-style: github
+    css: custom.css
+    html-math-method:
+      method: mathjax
+      url: "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js"
+execute:
+  echo: false
+  warning: false
+---
+
+---
+
+## Sampling Distribtion -- Recap
+
+::::: columns
+::: {.column width="50%"}
+![](bootstrap_vs_sampling_left.png){fig-alt="Left panel only: Sampling Distribution flowchart. A navy ellipse labelled Population with true slope beta-1 equals 2.50 at top. Three arrows lead to orange-bordered sample boxes. Green dots converge into a green bell-curve histogram labelled Sampling Distribution of beta-hat-1 with SE bracket." width="100%"}
+:::
+
+::: {.column width="50%"}
+
+* [Core ideas:]{.hl1}
+
+  * The distribution of $\widehat{\beta}_{1}$ in repeated samples.
+
+  * Useful in understanding the statistical uncertainty in $\widehat{\beta}_{1}$.
+
+  * But also a hypothetical construct, not accessible in practice.
+
+
+* [Analytical approach to a workaround:]{.hl1}
+
+  * Make theoretical model assumptions and derive an explicit expression for ${\text{SE}}(\widehat{\beta}_{1})$ for fixed $x$.
+  
+  * Use this to obtain $\widehat{\text{SE}}(\widehat{\beta}_{1})$ from the (only) observed sample.
+  
+  * Also use them to construct confidence intervals for $\beta_{1}$.  
+  
+  * Generalizable to other regression parameters in multiple regression problems.
+  
+  * But some practical challenges still remain.
+  
+    * Not easily generalizable to random $x$. 
+    
+    * $\widehat{\text{SE}}(\widehat{\beta}_{1})$ has its own sampling fluctuations.
+  
+    * Not robust to model assumption violations.
+
+:::
+
+:::::
+
+
+
+
+---
+
+## Computational Solution -- Bootstrap
+
+:::: columns
+
+::: {.column width="50%"}
+
+::: {.callout-note icon=false appearance="simple" style="display:table; border-left: 0px solid #1a2744; padding: 0px 0 0px 0px; margin: 8px auto;"}
+* Start with the original sample of size $n$.
+
+* Repeat the following process a large number $B$ times (typically $B \ge 1000$):
+
+    -   **Step 1:** Draw a [bootstrap sample]{.hl1} by resampling $n$ times from the original sample with replacement at random.
+    -   **Step 2:** Fit the regression on this bootstrap sample and record the slope $\widehat\beta_1^*$.
+
+* Examine the [bootstrap distribution]{.hl1} of all $B$ collected $\widehat\beta_1^*$ values.
+
+:::
+
+* The bootstrap distribution mimics both the shape and the spread of the true sampling distribution. 
+
+* However, it gets shifted over to center around the original sample estimate $\widehat{\beta}_{1}$. 
+
+* This implies, while we can not use it to estimate $\beta_{1}$, we can use it to estimate the standard error: 
+
+::: {.callout-note icon=false appearance="simple" style="display:table; border-left: 0px solid #1a2744; padding: 0px 0 0px 0px; margin: 8px auto;"}
+$$\text{SD}_{\text{boot}}(\widehat{\beta}_1^{*}) \approx \text{SE}(\widehat{\beta}_1)$$
+:::
+:::
+
+::: {.column width="50%"}
+![](bootstrap_vs_sampling_right.png){fig-alt="Right panel only: Bootstrap flowchart. An orange-bordered box labelled One Observed Sample with beta-hat-1 equals 2.46 at top. Three arrows lead to purple-bordered resample boxes. Purple dots converge into a purple bell-curve histogram labelled Bootstrap Distribution of beta-hat-1-star with Bootstrap SE bracket." width="100%"}
+:::
+::::
+
+
+---
+
+## Computational Solution -- Bootstrap
+
+:::: columns
+
+::: {.column width="50%"}
+
+::: {.callout-note icon=false appearance="simple" style="display:table; border-left: 0px solid #1a2744; padding: 0px 0 0px 0px; margin: 8px auto;"}
+* Start with the original sample of size $n$.
+
+* Repeat the following process a large number $B$ times (typically $B \ge 1000$):
+
+    -   **Step 1:** Draw a [bootstrap sample]{.hl1} by resampling $n$ times from the original sample with replacement at random.
+    -   **Step 2:** Fit the regression on this bootstrap sample and record the slope $\widehat\beta_1^*$.
+
+* Examine the [bootstrap distribution]{.hl1} of all $B$ collected $\widehat\beta_1^*$ values.
+
+:::
+
+* The bootstrap distribution mimics both the shape and the spread of the true sampling distribution. 
+
+* However, it gets shifted over to center around the original sample estimate $\widehat{\beta}_{1}$. 
+
+* This implies, we can also use it to construct confidence intervals using approximate formulas: 
+
+::: {.callout-note icon=false appearance="simple" style="display:table; border-left: 0px solid #1a2744; padding: 0px 0 0px 0px; margin: 8px auto;"}
+$$
+95\% \text{ CI for } \beta_{1}: [\widehat{\beta}_{1} \pm 2 \times \text{SD}_{\text{boot}}(\widehat{\beta}_{1})]
+$$
+:::
+:::
+
+::: {.column width="50%"}
+![](bootstrap_vs_sampling_right.png){fig-alt="Right panel only: Bootstrap flowchart. An orange-bordered box labelled One Observed Sample with beta-hat-1 equals 2.46 at top. Three arrows lead to purple-bordered resample boxes. Purple dots converge into a purple bell-curve histogram labelled Bootstrap Distribution of beta-hat-1-star with Bootstrap SE bracket." width="100%"}
+:::
+::::
+
+
+---
+
+## Computational Solution -- Bootstrap
+
+:::: columns
+
+::: {.column width="50%"}
+
+::: {.callout-note icon=false appearance="simple" style="display:table; border-left: 0px solid #1a2744; padding: 0px 0 0px 0px; margin: 8px auto;"}
+* Start with the original sample of size $n$.
+
+* Repeat the following process a large number $B$ times (typically $B \ge 1000$):
+
+    -   **Step 1:** Draw a [bootstrap sample]{.hl1} by resampling $n$ times from the original sample with replacement at random.
+    -   **Step 2:** Fit the regression on this bootstrap sample and record the slope $\widehat\beta_1^*$.
+
+* Examine the [bootstrap distribution]{.hl1} of all $B$ collected $\widehat\beta_1^*$ values.
+
+:::
+
+* The bootstrap distribution mimics both the shape and the spread of the true sampling distribution. 
+
+* However, it gets shifted over to center around the original sample estimate $\widehat{\beta}_{1}$. 
+
+* This implies, we can also use it to construct confidence intervals using the quantiles of the bootstrap samples $\widehat{\beta}_{1}^{*}$'s: 
+
+::: {.callout-note icon=false appearance="simple" style="display:table; border-left: 0px solid #1a2744; padding: 0px 0 0px 0px; margin: 8px auto;"}
+$$
+95\% \text{ CI for } \beta_{1}: [\widehat{\beta}_{1,2.5\%}^{*} , \widehat{\beta}_{1,97.5\%}^{*}]
+$$
+:::
+:::
+
+::: {.column width="50%"}
+![](bootstrap_vs_sampling_right.png){fig-alt="Right panel only: Bootstrap flowchart. An orange-bordered box labelled One Observed Sample with beta-hat-1 equals 2.46 at top. Three arrows lead to purple-bordered resample boxes. Purple dots converge into a purple bell-curve histogram labelled Bootstrap Distribution of beta-hat-1-star with Bootstrap SE bracket." width="100%"}
+:::
+::::
+
+
+
+---
+
+## Bootstrap Continued ...
+
+
+* [**Why the name 'bootstrap'?**]{.hl1} drawn from the expression “to pull oneself up by one's bootstraps,” which means to improve oneself or achieve success through one's own effort, without outside help.
+
+
+![](case_bootstrap_2.png){fig-alt="Four-panel workflow illustrating the bootstrap procedure for a regression coefficient estimate-hat-1. Left panel, labelled Original Sample, shows an orange-bordered box containing six observations numbered 1 through 6 arranged in two rows, with n equals 6 (simplified). A shaded label reports Fit: beta-hat-1 equals 2.46. A note below reads Draw n equals 6 with replacement. An arrow points to the right. Middle-left panel, labelled Bootstrap Sample 1, shows a resample containing observations 1, 1, 3, 3, 5, and 6. A shaded label reports beta-hat-1-star equals 2.31. A note below states that observation 1 was drawn twice and observations 2 and 4 were not drawn. Middle-right panel, labelled Bootstrap Sample 2, shows a resample containing observations 2, 2, 4, 4, 5, and 6. A shaded label reports beta-hat-1-star equals 2.61. A note below states that observation 2 was drawn twice and observations 1 and 3 were not drawn. Dots between panels indicate many additional bootstrap resamples. A label beside the connecting arrow reads repeat B equals 1000 times. Right panel, labelled Bootstrap Distribution of beta-hat-1-star, contains a green-bordered histogram of bootstrap coefficient estimates centred near 2.46. A dashed vertical line marks beta-hat-1 equals 2.46. The horizontal axis is labelled beta-hat-1-star values. A note on the right states spread equals SE(beta-hat-1-star). At the bottom, an orange confidence-interval bracket is labelled 95% Bootstrap CI: [2.01, 2.97]. The figure illustrates how repeated sampling with replacement from a single observed sample produces a bootstrap distribution that can be used to estimate standard errors and confidence intervals for beta-1." fig-align="center" width="80%"}
+
+<!--* Some values may appear several times in the bootstrap sample, while some others get completely omitted.-->
+
+---
+
+![](bootstrap_vs_sampling.png){fig-alt="Side-by-side flowchart contrasting two approaches to quantifying uncertainty in the OLS slope estimate beta-hat-1. Left panel, labelled Sampling Distribution — a thought experiment: a navy ellipse labelled Population with true slope beta-1 equals 2.50 sits at the top. Three downward arrows labelled draw many samples of size n lead to three orange-bordered boxes labelled Sample 1 with beta-hat-1 equals 2.31, Sample 2 with beta-hat-1 equals 2.67, and Sample 3 with beta-hat-1 equals 2.44, each with n equals 100, followed by dots indicating more samples. Below, scattered green dots labelled collect beta-hat-1 from each sample converge via arrows into a green-bordered rectangle labelled Sampling Distribution of beta-hat-1, containing a bell-shaped curve. A dashed navy vertical line marks the true slope at the centre, and an orange horizontal bracket marks SE(beta-hat-1). A note at the bottom reads: Source is the infinite population; centre is the true beta-1. Right panel, labelled Bootstrap — a practical algorithm: an orange-bordered rectangle labelled One Observed Sample with beta-hat-1 equals 2.46 and n equals 100 sits at the top. Three downward arrows labelled resample with replacement B times lead to three purple-bordered boxes labelled Resample 1-star with beta-hat-1-star equals 2.38, Resample 2-star with beta-hat-1-star equals 2.59, and Resample 3-star with beta-hat-1-star equals 2.52, each with n equals 100, followed by dots indicating more resamples. Below, scattered purple dots labelled collect beta-hat-1-star from each resample converge via arrows into a purple-bordered rectangle labelled Bootstrap Distribution of beta-hat-1-star, containing a bell-shaped curve. A dashed orange vertical line marks the observed beta-hat-1 at the centre, and a purple horizontal bracket marks Bootstrap SE(beta-hat-1). A note at the bottom reads: Source is one sample resampled with replacement; centre is beta-hat-1." width="100%"}
+
+
+
+
+---
+
+## Residual vs. Case Bootstrap
+
+:::: {.columns}
+
+::: {.column width="49%"}
+
+When $x$ values are [fixed]{.hl1}; resamples **residuals** ($\widehat{e}_{i}$) only.
+
+
+![](residual_bootstrap.png){width=65% fig-align="center"}
+
+:::
+
+::: {.column width="49%"}
+
+When $x$ values are also [random]{.hl1} (in addition to $y$); <br>resamples **rows** $(x_i, y_i)$ jointly.
+
+
+![](case_bootstrap.png){width=65% fig-align="center"}
+
+:::
+
+::::
+
+
+
+---
+
+## Residual vs. Case Bootstrap -- Key Differences
+
+| Property | Residual Bootstrap | Case Bootstrap |
+|---|---|---|
+| What is resampled? | Residuals $\hat{e}_i$ | Pairs $(x_i, y_i)$ |
+| $x$ values in replicate | Fixed (same as original) | Random (from original) |
+| Critical assumption | Errors i.i.d. <!--model correctly specified--> | $(x, y)$ pairs i.i.d. |
+| Robust to model misspecification? | No | **Yes** |
+| Appropriate when $x$ is fixed by design? | **Yes** | Less natural |
+| Appropriate when $x$ is random? | Less natural | **Yes** |
+| Typical use case | Designed experiments | Observational studies, survey data |
+
+<!--::: {.callout-note appearance="minimal"}
+**Practical note.** In simple random sampling settings both methods are asymptotically equivalent for estimating $\text{Var}(\widehat{\beta}_1)$, but they can diverge when the error distribution is heteroskedastic or the model is misspecified — situations where the case bootstrap is generally preferred.
+:::-->
+
+
+
+## Bootstrapping in Regression — Interactive Demo
+
+```{=html}
+<iframe src="demo_bootstrap.html"
+        width="150%"
+        height="600px"
+        style="border:none; display:block; 
+                 transform:scale(1.4); 
+                 transform-origin:top center;"
+        sandbox="allow-scripts allow-same-origin">
+</iframe>
+```
+
+
+
+---
+
+## Real Data Illustration: `cars`
+
+Let's model the relationship between speed ($x$, in mph) and stopping distance ($y$, in ft) using simple linear regression: $$dist_{i} = \beta_{0} + \beta_{1}speed_{i} + \epsilon_{i}$$
+
+:::: {.columns}
+
+::: {.column width="40%"}
+```{r}
+#| echo: false
+#| eval: true
+#| comment: ""
+#| cache: false
+#| fig-height: 4.5
+#| fig-width: 8
+#| out-width: "100%"
+#| fig-align: center
+
+# ── 1. Load Data, Fit Model, and Print Analytical Summary ─────────────────────
+data(cars)
+
+# Fit the original OLS model
+model <- lm(dist ~ speed, data = cars)
+n <- nrow(cars)
+B <- 1000 # Number of bootstrap replications
+
+# Print original analytical summary
+cat("--- Original Analytical Results ---\n")
+print(round(summary(model)$coefficients["speed", 1:2],3))
+
+# ── 2. Method A: Residual Bootstrapping ───────────────────────────────────────
+# (Assumes the linear relationship and homoscedasticity are correct)
+fitted_vals <- fitted(model)
+residuals   <- residuals(model)
+
+beta1_boot_res <- numeric(B)
+
+set.seed(123) # For reproducibility
+for (b in 1:B) {
+  # Resample the residuals with replacement
+  boot_res <- sample(residuals, size = n, replace = TRUE)
+  
+  # Construct new synthetic Y values
+  y_star <- fitted_vals + boot_res
+  
+  # Refit the model with synthetic Y and original X
+  boot_model <- lm(y_star ~ speed, data = cars)
+  beta1_boot_res[b] <- coef(boot_model)["speed"]
+}
+
+# Calculate Residual Bootstrap SE and 95% CI
+se_res <- sd(beta1_boot_res)
+ci_res <- quantile(beta1_boot_res, probs = c(0.025, 0.975))
+
+cat("\n--- Residual Bootstrap Results ---\n")
+cat("Bootstrap SE:", round(se_res,3), "\n")
+cat("95% Percentile CI: [", round(ci_res[1],3), ",", round(ci_res[2],3), "]\n")
+
+
+# ── 3. Method B: Case (Pairs) Bootstrapping ──────────────────────────────────
+# (Does not assume a true linear model; robust to heteroscedasticity)
+beta1_boot_pairs <- numeric(B)
+
+set.seed(123)
+for (b in 1:B) {
+  # Resample the entire row indices with replacement
+  boot_idx <- sample(1:n, size = n, replace = TRUE)
+  boot_data <- cars[boot_idx, ]
+  
+  # Refit the model on the paired resamples
+  boot_model <- lm(dist ~ speed, data = boot_data)
+  beta1_boot_pairs[b] <- coef(boot_model)["speed"]
+}
+
+# Calculate Case Bootstrap SE and 95% CI
+se_pairs <- sd(beta1_boot_pairs)
+ci_pairs <- quantile(beta1_boot_pairs, probs = c(0.025, 0.975))
+
+cat("\n--- Case (Pairs) Bootstrap Results ---\n")
+cat("Bootstrap SE:", round(se_pairs,3), "\n")
+cat("95% Percentile CI: [", round(ci_pairs[1],3), ",", round(ci_pairs[2],3), "]\n")
+
+```
+:::
+
+::: {.column width="55%"}
+```{r}
+#| echo: false
+#| eval: true
+#| comment: ""
+#| cache: false
+#| fig-height: 4.5
+#| fig-width: 8
+#| out-width: "100%"
+#| fig-align: center
+
+# ── 4. Plot original data and the two bootstrap distributions ─────────────────
+layout(matrix(1:2, ncol = 2))
+
+# Residual Bootstrap Distribution Plot
+hist(beta1_boot_res, col = "lightblue", border = "white",
+     main = "Residual Bootstrap", xlab = expression(hat(beta)[1]^"*"))
+abline(v = coef(model)["speed"], col = "red", lwd = 2, lty = 2) # Original estimate
+abline(v = ci_res, col = "blue", lwd = 2, lty = 3) # Confidence Interval
+
+# Case Bootstrap Distribution Plot
+hist(beta1_boot_pairs, col = "lavender", border = "white",
+     main = "Case Bootstrap", xlab = expression(hat(beta)[1]^"*"))
+abline(v = coef(model)["speed"], col = "red", lwd = 2, lty = 2) # Original estimate
+abline(v = ci_pairs, col = "blue", lwd = 2, lty = 3) # Confidence Interval
+
+```
+:::
+::::
+
+
+
+<!--## Key Takeaways
+
+- The **sampling distribution** describes how $\widehat{\beta}_1$ would vary across repeated samples, but it is a theoretical construct that is typically unobservable in practice. 
+
+- **Bootstrap** provides a computational approximation to the sampling distribution by repeatedly resampling the observed data with replacement and refitting the model. 
+
+- The variability of the bootstrap estimates,
+  $\text{SD}_{\text{boot}}(\widehat{\beta}_1^*),$
+  provides an estimate of the standard error of $\widehat{\beta}_1$. 
+  
+- Bootstrap distributions typically reproduce the **shape and spread** of the sampling distribution, while being centered around the observed estimate $\widehat{\beta}_1$. 
+
+- Confidence intervals can be obtained using either:
+  - Approximation formulas based on the bootstrap standard error, or
+  - Percentile intervals based directly on bootstrap quantiles. 
+
+- **Residual bootstrap** is appropriate when predictor values are treated as fixed; **case bootstrap** is preferred when observations $(x_i,y_i)$ are viewed as random draws from a population. 
+
+- Case bootstrap is generally more robust to model misspecification, whereas residual bootstrap relies more heavily on regression model assumptions. 
+
+- **Main message:** Bootstrap methods allow us to quantify uncertainty in regression estimates using only the observed data and modern computation.
+-->

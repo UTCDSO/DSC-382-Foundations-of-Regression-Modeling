@@ -1,0 +1,98 @@
+/*-- scss:defaults --*/
+
+/* Fonts */
+$font-family-sans-serif: "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+$presentation-heading-font: "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+$presentation-heading-font-weight: 700;
+$presentation-font-size-root: 32px;
+
+/* Color palette */
+$body-bg: #fcfbf7;
+$body-color: #1f2430;
+$link-color: #2b6cb0;
+$selection-bg: #bee3f8;
+
+/* Optional accent colors for callouts and emphasis */
+$code-block-bg: #f4f1ea;
+
+/*-- scss:rules --*/
+
+
+/* Make institute, author, and date visually identical */
+#title-slide .quarto-title-author-name,
+#title-slide .quarto-title-affiliation,
+#title-slide .date {
+  font-size: 1.05em;
+  line-height: 1.35;
+  font-weight: 400;
+  margin: 0.18em 0;
+}
+
+.reveal .slides {
+  text-align: left;
+}
+
+.reveal .slide h1,
+.reveal .slide h2,
+.reveal .slide h3 {
+  color: #163a5f;
+  letter-spacing: -0.02em;
+  text-transform: none;
+  margin-bottom: 0.5em;
+}
+
+.reveal .slide h1 {
+  font-size: 2.0em;
+}
+
+.reveal .slide h2 {
+  font-size: 1.45em;
+  border-bottom: 3px solid #d9e2f2;
+  padding-bottom: 0.18em;
+}
+
+.reveal p,
+.reveal li {
+  font-size: 1em;
+  line-height: 1.45;
+}
+
+.reveal strong {
+  color: #8b2e2e;
+}
+
+.reveal code {
+  background: #f4f1ea;
+  padding: 0.08em 0.22em;
+  border-radius: 6px;
+}
+
+.reveal pre code {
+  border-radius: 10px;
+  padding: 0.9em;
+}
+
+.reveal blockquote {
+  width: 92%;
+  margin: 1em auto;
+  padding: 0.6em 1em;
+  background: #f7f4ec;
+  border-left: 6px solid #2b6cb0;
+  box-shadow: none;
+}
+
+.reveal .footer {
+  color: #5b6470;
+  font-size: 0.55em;
+}
+
+.reveal table {
+  font-size: 0.85em;
+}
+
+.reveal img,
+.reveal video,
+.reveal iframe {
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+}

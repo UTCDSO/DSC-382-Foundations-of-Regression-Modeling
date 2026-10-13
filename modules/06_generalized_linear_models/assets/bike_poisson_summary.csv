@@ -1,0 +1,12 @@
+quantity,value
+days,365
+zero_rental_days,2
+lm_temp_slope,0.36461252037123365
+lm_weekend,4.267391827154701
+pois_intercept,-0.585295328100555
+pois_temp_slope,0.038182107280438034
+pois_weekend,0.38121647969769634
+temp_rate_ratio_1F,1.0389204106232228
+temp_rate_ratio_10F,1.4649499422965195
+weekend_rate_ratio,1.4640645113494648
+pred_rentals_90F_saturday,25.338140921649423

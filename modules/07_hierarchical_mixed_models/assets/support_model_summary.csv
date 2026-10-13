@@ -1,0 +1,10 @@
+quantity,value
+agents,60
+tickets,6188
+median_agent_tickets,49
+min_agent_tickets,6
+max_agent_tickets,336
+lm_priority_effect,-0.31267590360571224
+mixed_priority_effect,-0.31258629047929726
+mixed_agent_sd,0.32048816110898903
+mixed_residual_sd,0.4333515838184114

@@ -1,0 +1,10 @@
+quantity,value
+games,2600
+home_win_rate,0.5857692307692308
+linear_spread_slope,0.03330084623367482
+logit_intercept,0.13488820068647894
+logit_spread_slope,0.19011008878127972
+spread_odds_ratio,1.2093827297997637
+prob_home_spread_minus_10,0.1460139508161332
+prob_home_spread_0,0.5336710124603135
+prob_home_spread_10,0.8845242203651454

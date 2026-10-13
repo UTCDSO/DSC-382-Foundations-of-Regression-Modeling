@@ -1,0 +1,14 @@
+quantity,value
+naive_log_price_slope,1.9357753246243155
+marketing_adjusted_log_price_slope,2.094955516725041
+exposure_adjusted_log_price_slope,-2.706579404263815
+log_eligible_views_slope,1.810341265815005
+market_adjusted_log_price_slope,-2.3479883765554317
+interaction_no_push_slope,-2.2259805225952434
+interaction_push_extra_slope,-0.28427641001374027
+interaction_push_slope,-2.510256932608984
+push_lift_at_23_dollars,0.4379348730907193
+mean_price,24.025266345488113
+median_eligible_views,15163.5
+median_units,1553.5
+push_week_rate,0.43653846153846154

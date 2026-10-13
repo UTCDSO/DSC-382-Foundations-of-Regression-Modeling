@@ -1,0 +1,9 @@
+ConnectionID,Hub,ScheduledConnectionMinutes,ArrivalDelayMinutes,TerminalChange,MadeConnection
+5259,DEN,155,-15,Same terminal,Made connection
+1699,DFW,52,16,Same terminal,Missed connection
+2360,CLT,118,-6,Same terminal,Made connection
+5860,DFW,49,13,Same terminal,Made connection
+1649,DFW,59,-2,Terminal change,Made connection
+5793,DFW,49,7,Same terminal,Made connection
+7052,DFW,35,-13,Same terminal,Made connection
+848,CLT,67,0,Same terminal,Made connection

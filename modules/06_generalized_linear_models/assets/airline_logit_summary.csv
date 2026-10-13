@@ -1,0 +1,13 @@
+quantity,value
+connections,7200
+overall_make_rate,0.8655555555555555
+simple_delay_slope,-0.08225883515244051
+simple_delay_odds_ratio_10min,0.4392931366395211
+main_scheduled_slope,0.0860977603012843
+main_scheduled_odds_ratio_10min,2.3654720563332456
+main_delay_slope,-0.10127703758761405
+main_delay_odds_ratio_10min,0.3632113524942193
+main_terminal_change_odds_ratio,0.6129415391222691
+interaction_dfw_terminal_or,1.1479272526621749
+interaction_ord_terminal_or,0.3666848592034587
+interaction_iah_terminal_or,0.39043688965511586

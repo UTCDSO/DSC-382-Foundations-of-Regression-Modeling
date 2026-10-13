@@ -1,0 +1,15 @@
+quantity,value
+n_rows,26304
+mean_demand_gw,43.577187652068126
+mean_temp_f,68.39139673770481
+raw_temp_slope_gw_per_f,0.16843075237833638
+linear_adjusted_temp_slope_gw_per_f,0.16703316662384815
+quadratic_b1_centered_65,0.09761419731548449
+quadratic_b2_centered_65,0.01172373488978998
+quadratic_slope_at_50_gw_per_f,-0.25409784937821495
+quadratic_slope_at_90_gw_per_f,0.6838009418049835
+spline_adjusted_demand_45f,42.93807111988806
+spline_adjusted_demand_65f,40.248890530834466
+spline_adjusted_demand_95f,53.62116276551979
+spline_95_minus_65_gw,13.372272234685326
+spline_45_minus_65_gw,2.689180589053592

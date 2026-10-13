@@ -1,0 +1,11 @@
+quantity,value
+markets,35
+market_weeks,2303
+median_market_weeks,58
+min_market_weeks,20
+max_market_weeks,167
+mixed_fee_slope,-3.5841782868814573
+mixed_fee_slope_sd,1.1621866305359854
+mixed_intercept_sd,12.137044209234015
+promo_effect,9.536221207586976
+rainy_share_effect,20.37462794698906

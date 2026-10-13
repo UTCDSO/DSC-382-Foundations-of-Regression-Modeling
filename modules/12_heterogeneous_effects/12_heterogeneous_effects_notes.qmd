@@ -1,0 +1,238 @@
+---
+title: "Heterogeneous treatment effects"
+subtitle: "Lecture notes"
+author: "Foundations of Regression and Predictive Modeling"
+format:
+  pdf:
+    toc: true
+    number-sections: false
+    geometry: margin=1in
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: setup
+#| include: false
+library(tidyverse)
+library(broom)
+library(splines)
+set.seed(382)
+
+module_dir <- if (file.exists("winback_offer.csv")) {
+  "."
+} else {
+  "modules/12_heterogeneous_effects"
+}
+```
+
+## From "does it work?" to "for whom?"
+
+Every experiment in this unit so far has ended with one number: the treatment effect. That number is an average over everyone in the experiment, and averages can conceal as much as they reveal. A treatment that does nothing on average may work well for one group and backfire for another; a treatment with a healthy average effect may earn all of it from a minority of units while wasting money on the rest.
+
+This module is about modeling that variation. The tools are not new — they are the interaction terms from the categorical-variables and factorial-experiment modules, plus the spline machinery from the smoothing module — but the target changes. Instead of modeling how the *outcome* varies, we model how the *treatment effect* varies: across groups, along a numeric covariate, and along the dose of the treatment itself.
+
+One warning runs through everything here. Effect differences are estimated with less data than effects: each subgroup has a fraction of the sample, and a difference of two noisy numbers is noisier still. Heterogeneity claims therefore deserve more skepticism than average-effect claims, and subgroups invented after peeking at the data deserve the most skepticism of all.
+
+## Case 1: the win-back offer
+
+The Austin pet-supply retailer from the factorial-experiment module is still running tests. The growth team emails a win-back offer — 30% off your next order — to a random half of 4,000 customers who have not ordered recently. The outcome is spend over the following 60 days.
+
+```{r}
+#| echo: true
+winback <- read_csv(file.path(module_dir, "winback_offer.csv")) |>
+  mutate(segment = factor(segment, levels = c("active", "drifting", "lapsed")))
+
+winback |> head(4)
+```
+
+The `segment` column comes from the CRM's lifecycle labels, defined before the experiment ran: **active** customers ordered within the last 4 weeks, **drifting** customers have been quiet for 4 to 12 weeks, and **lapsed** customers for more than 12.
+
+The average treatment effect is the one-dummy regression from the start of this unit:
+
+```{r}
+#| echo: true
+overall_model <- lm(spend_60d ~ offer, data = winback)
+tidy(overall_model, conf.int = TRUE)
+```
+
+About $+\$4.13$ per customer, clearly positive. Since the email costs almost nothing, the tempting conclusion is a blanket rollout. But the $4.13 averages over a customer who ordered last week, a customer quietly drifting away, and a customer gone for six months, and there is no reason one discount should do the same thing to all three.
+
+## Treatment-by-group interactions
+
+The interaction model lets each segment have its own treatment effect:
+
+```{r}
+#| echo: true
+interaction_model <- lm(spend_60d ~ offer * segment, data = winback)
+tidy(interaction_model, conf.int = TRUE)
+```
+
+The reading follows the factorial module, with one twist in emphasis:
+
+- `offer` is the treatment effect *in the baseline segment* (active): about $-\$3.35$.
+- Each interaction coefficient is the *difference between that segment's effect and the baseline effect*. The drifting effect is $-3.35 + 17.11 \approx +\$13.76$; the lapsed effect is $-3.35 + 7.60 \approx +\$4.25$.
+
+The interaction coefficients come with their own intervals — `offer:segmentdrifting` is $+17.11$ with interval roughly $[14.09, 20.14]$ — so "the segments differ" is itself an estimated, uncertainty-quantified claim, not an eyeball judgment.
+
+![](assets/winback-segment-effects.png){fig-alt="Offer effects by segment: about minus 3.35 for active, plus 13.76 for drifting, plus 4.25 for lapsed, with the dashed average effect at 4.13." width="90%"}
+
+The active-segment result deserves attention: the offer *reduced* revenue among customers who ordered recently, with an interval entirely below zero. Nothing mysterious happened — these customers were about to order anyway, and the offer took 30% off purchases that would have occurred at full price. That is **cannibalization**, and only a heterogeneity analysis can see it. The average effect quietly nets the drifting segment's gains against the active segment's losses.
+
+The decision changes accordingly. A blanket rollout earns the average; a targeted rollout — send to drifting and lapsed, exclude active — earns the average *plus* the money the active segment was losing. Same experiment, same data, roughly double the payoff.
+
+## A numeric moderator
+
+The segments are bins of a number the retailer already has: weeks since the last order. The direct way to use the number is a treatment-by-covariate interaction:
+
+```{r}
+#| echo: true
+weeks_model <- lm(spend_60d ~ offer * weeks_since_last_order, data = winback)
+tidy(weeks_model, conf.int = TRUE)
+```
+
+The interaction says the offer effect grows by about $\$0.18$ per week of recency, with an interval of roughly $[0.03, 0.34]$. Statistically significant, tidy — and wrong about the shape. Estimating the effect within recency bins tells a different story:
+
+```{r}
+#| echo: true
+winback |>
+  mutate(bin = cut(weeks_since_last_order, c(0, 4, 8, 12, 20, 30))) |>
+  group_by(bin) |>
+  group_modify(\(d, g) {
+    tidy(lm(spend_60d ~ offer, data = d), conf.int = TRUE) |>
+      filter(term == "offer")
+  }) |>
+  select(bin, estimate, conf.low, conf.high)
+```
+
+![](assets/winback-weeks-effect.png){fig-alt="Binned offer effects rise from negative near zero weeks to a peak of 13 to 15 dollars in the 4 to 12 week range, then fall back to 3 to 5 dollars. The linear interaction model's dashed line rises gently and misses the shape." width="90%"}
+
+The real effect rises and then falls: negative for recent customers, peaked in the drifting window, fading for the long-lapsed. A single linear interaction cannot bend, so it reported the average tilt of that shape and missed both the peak and the negative region. The smoothing module's lesson applies to effects, not just outcomes: numeric moderators may need curves.
+
+## Subgroup fishing
+
+The CRM has dozens more columns, and ten more subgroup analyses cost ten lines of code. The dataset includes two columns — app platform and signup weekday — that were generated with *no connection whatsoever* to the offer. Testing an offer interaction for ten junk splits produces this:
+
+```{r}
+#| echo: true
+junk_splits <- list(
+  ios = winback$app_platform == "ios",
+  android = winback$app_platform == "android",
+  web = winback$app_platform == "web",
+  Mon = winback$signup_weekday == "Mon",
+  Tue = winback$signup_weekday == "Tue",
+  Wed = winback$signup_weekday == "Wed",
+  Thu = winback$signup_weekday == "Thu",
+  Fri = winback$signup_weekday == "Fri",
+  Sat = winback$signup_weekday == "Sat",
+  Sun = winback$signup_weekday == "Sun"
+)
+
+imap_dfr(junk_splits, \(flag, label) {
+  d <- winback |> mutate(in_group = as.integer(flag))
+  lm(spend_60d ~ offer * in_group, data = d) |>
+    tidy() |>
+    filter(term == "offer:in_group") |>
+    transmute(subgroup = label, interaction_p = p.value)
+}) |>
+  arrange(interaction_p)
+```
+
+Saturday signups show an offer effect of about $+\$8.50$ — double the average — with an interaction p-value of $0.016$. It is pure luck. With ten tests at the 5% level, the chance of at least one false hit is $1 - 0.95^{10} \approx 40\%$, and subgroup estimates are noisy enough (smaller $n$, wider intervals) to swing dramatically by chance.
+
+![](assets/winback-fishing.png){fig-alt="Forest plot of ten junk subgroup effects clustered around the average, with Saturday signups flagged at p equal to 0.016." width="90%"}
+
+The recency segments and the Saturday finding have different pedigrees. The segments were **prespecified**: named before launch, with a business reason attached. Saturday was **discovered**: found by searching after the fact, with an explanation invented afterward. The rules of engagement for discoveries: demote them to hypotheses, replicate them in the next experiment before acting, and if searching is unavoidable, count the searches and correct for them.
+
+## Case 2: dose-response
+
+The retailer's second question is not whether a treatment works but *how much treatment to give*. The media buyer wants to know how many retargeting impressions per week to show one person. The experiment randomizes 3,600 customers to a weekly impression cap of 0, 2, 4, 8, 12, or 16, with spend over 30 days as the outcome.
+
+```{r}
+#| echo: true
+adcap <- read_csv(file.path(module_dir, "ad_frequency.csv"))
+
+adcap |>
+  group_by(weekly_ad_cap) |>
+  summarize(n = n(), mean_spend = mean(spend_30d))
+```
+
+Spend climbs steeply from cap 0 to cap 8, then stops climbing. The straight-line dose model misses that structure:
+
+```{r}
+#| echo: true
+linear_dose <- lm(spend_30d ~ weekly_ad_cap, data = adcap)
+tidy(linear_dose, conf.int = TRUE)
+```
+
+The line promises about 63 cents per impression, forever — extrapolate to 30 impressions and it forecasts $+\$19$ per customer, which no advertiser has ever experienced. The response saturates, so the model must be allowed to bend. This is the spline machinery from the smoothing module, applied to a treatment dose:
+
+```{r}
+#| echo: true
+spline_dose <- lm(spend_30d ~ ns(weekly_ad_cap, df = 4), data = adcap)
+
+tibble(weekly_ad_cap = c(0, 4, 8, 16)) |>
+  mutate(fitted_spend = predict(spline_dose, newdata = pick(everything()))) |>
+  mutate(gain_from_previous = fitted_spend - lag(fitted_spend))
+```
+
+![](assets/adcap-fits.png){fig-alt="Arm means with a dashed straight-line fit that underfits both ends and a solid spline that rises steeply to cap 8 and then goes flat near 51 dollars." width="90%"}
+
+The fitted curve turns the experiment into a marginal-value table: the first four impressions earn about \$2.20 each, the next four about 67 cents each, and impressions beyond eight buy about a penny apiece while costing the same to serve. The decision is a cap at 8. What answered the question was not a treatment effect but a *marginal* treatment effect read off a fitted curve — dose-response is heterogeneity along the treatment itself.
+
+## The effect curve and a targeting rule
+
+The win-back case left two loose ends. The binned effects traced a rise-and-fall shape that no linear interaction could follow, and the three segments are crude bins of a number the retailer knows exactly for every customer. The dose-response case supplied the missing tool — splines — so the closing move is to put the spline where the heterogeneity is and let the treatment effect itself be a smooth curve in recency:
+
+```{r}
+#| echo: true
+curve_fit <- lm(spend_60d ~ ns(weeks_since_last_order, df = 4) * offer, data = winback)
+```
+
+The model fits two smooth curves, one per arm, and the treatment effect at recency $w$ is the vertical gap between them, $\widehat\tau(w) = \widehat f_1(w) - \widehat f_0(w)$. Each gap is a linear combination of coefficients — a contrast, exactly as in the experiments module — so it carries a standard error from the coefficient covariance matrix:
+
+```{r}
+#| echo: true
+curve_grid <- seq(1, 30, by = 0.25)
+nd1 <- tibble(weeks_since_last_order = curve_grid, offer = 1)
+nd0 <- tibble(weeks_since_last_order = curve_grid, offer = 0)
+
+tt <- delete.response(terms(curve_fit))
+D <- model.matrix(tt, nd1) - model.matrix(tt, nd0)
+
+effect_curve <- tibble(
+  weeks = curve_grid,
+  effect = drop(D %*% coef(curve_fit)),
+  se = sqrt(rowSums((D %*% vcov(curve_fit)) * D))
+)
+```
+
+![](assets/winback-effect-curve.png){fig-alt="The estimated offer effect as a smooth curve: about minus 5 dollars at one week, crossing zero near week 4, peaking near 15 dollars around week 9, then fading, with a wider band at the edges." width="92%"}
+
+The curve says everything the segments said, plus where the boundaries actually are: the offer loses money below about week 4, peaks near $+\$15$ around week 9, and fades to a few dollars for the long-lapsed, with a band that widens where the data thin out. The right-hand edge wiggles — splines always do at boundaries — which is a reminder to trust the curve where the observations are dense.
+
+A curve supports a decision per customer rather than per bin: send the offer wherever $\widehat\tau(w) > 0$, which here means customers quiet for more than about four weeks — roughly 73% of the list. Scoring every customer with the model prices the policies for a 100,000-customer file: the blanket policy is worth about \$478K of incremental spend, and the curve-targeted policy about \$552K while sending 27% fewer emails. The entire gain is the active segment's negative effect, turned off.
+
+Two caveats belong in the write-up rather than the footnotes. First, the rule was built and priced on the same experiment; a cutoff chosen where a fitted curve crosses zero inherits the curve's noise, and same-data payoff estimates lean optimistic. The honest procedure is to freeze the rule and validate it on the next campaign. Second, the curve exists only where the data do — nobody in this experiment had been quiet for 40 weeks, so the rule says nothing about such customers. Within those limits, an effect curve estimated from a randomized experiment is the honest version of personalization: every promise it makes is a contrast between randomized groups.
+
+## Why heterogeneity is worth the trouble
+
+Heterogeneity analysis is where experiments meet decisions:
+
+- **Targeting.** Send the offer where it earns; turn it off where it cannibalizes.
+- **Rollout.** Launch where the effect is demonstrated; keep testing where it is not.
+- **Dosing.** Spend up to the flat part of the curve, then stop.
+- **Fairness.** "Works on average" can coexist with "fails for an important group." When treatment effects differ across groups of people, the average hides who pays for the win, and subgroup reporting is an honesty requirement, not a statistical nicety.
+
+An average effect is a summary. A heterogeneity analysis is a plan.
+
+## Summary
+
+- The average treatment effect answers "does it work on net?" Rollout decisions usually need "for whom?", and the two answers can differ in sign, as the active segment showed.
+- Treatment-by-group interactions estimate differences between treatment effects, with intervals of their own. Read the treatment coefficient as the baseline-group effect and each interaction as an offset to it.
+- Treatment effects can vary along a numeric covariate, and a linear interaction reports only the tilt. Check the shape with binned effects, and let moderators have curves when the data ask for them.
+- Searching many subgroups guarantees occasional false discoveries — about a 40% chance in ten looks. Prespecify subgroups where possible; treat discovered ones as hypotheses to replicate.
+- Dose-response models the effect as a curve in treatment intensity. Fit it with splines, read marginal gains off the curve, and stop paying past the saturation point.
+- This closes the experiments unit: designed comparisons (randomization), nuisance control (blocks and fixed effects), found comparisons (before/after and thresholds), and effects that vary (heterogeneity).

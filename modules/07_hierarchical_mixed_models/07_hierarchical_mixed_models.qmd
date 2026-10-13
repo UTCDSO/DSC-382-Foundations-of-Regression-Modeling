@@ -1,0 +1,629 @@
+---
+title: "Hierarchical and Mixed Models"
+subtitle: "Partial pooling for grouped data"
+institute: "James Scott  |  Abhra Sarkar  |  UT-Austin"
+author: "Foundations of Regression and Predictive Modeling"
+format:
+  revealjs:
+    theme: [simple, custom.scss]
+    slide-number: true
+    transition: none
+    background-transition: fade
+    center: false
+    preview-links: auto
+    code-overflow: wrap
+    fig-align: center
+    fig-width: 8
+    fig-height: 5
+    footer: "Models Beyond Ordinary Least Squares"
+    toc: false
+    self-contained: true
+  beamer:
+    aspectratio: 43
+    slide-number: true
+    toc: false
+    fig-align: center
+    fig-width: 7.5
+    fig-height: 4.5
+editor: visual
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+## The problem
+
+Industry data is grouped.
+
+- visits handled by physicians,
+- users acquired through channels,
+- review assignments handled by reviewers,
+- customers nested in accounts,
+- transactions nested in stores.
+
+And the groups are rarely balanced.
+
+Some groups have thousands of rows. Some have three.
+
+## Why this matters
+
+If we ignore the groups:
+
+> we pretend all observations are independent and comparable.
+
+If we fit a dummy for every group:
+
+> we estimate noisy effects for tiny groups as if they were just as reliable as large groups.
+
+Hierarchical models give us a third option.
+
+## The third option
+
+Partial pooling:
+
+> estimate group-specific effects, but pull weakly estimated groups toward the population average.
+
+The amount of pull is learned from the data.
+
+Small noisy groups get pulled hard.
+
+Large informative groups get pulled less.
+
+## Opening case
+
+A hospital system studies low-acuity ER visits: sprains, mild infections, simple cuts, and follow-ups.
+
+For each visit:
+
+- `DispositionMinutes`: minutes from rooming to disposition,
+- `Checklist`: whether a structured intake checklist was used,
+- `Physician`: attending physician.
+
+Question: did the checklist shorten disposition time, accounting for physician differences?
+
+## The data problem
+
+There are 75 physicians and 10,840 low-acuity visits.
+
+But the visit counts are wildly uneven:
+
+- smallest physician count: 3 visits,
+- median physician count: 46 visits,
+- largest physician count: 595 visits.
+
+##  {.plain}
+
+![](assets/er-physician-counts.png){fig-alt="Bar chart of low-acuity ER visits per physician. Counts range from three to several hundred." width="92%"}
+
+## First model: ignore physicians
+
+One pooled line:
+
+$$
+\log(\text{DispositionMinutes}_i)
+=
+\beta_0
++ \beta_1\text{Checklist}_i
++ e_i.
+$$
+
+This estimates one average checklist effect.
+
+But it assumes the leftover errors are independent after accounting for the checklist.
+
+That is hard to believe: visits handled by the same physician share workflow, shift patterns, habits, and case mix.
+
+## Second model: physician dummies
+
+Add one dummy for each physician:
+
+$$
+\log(\text{DispositionMinutes}_i)
+=
+\beta_0
++ \beta_1\text{Checklist}_i
++ \gamma_{\text{Physician}_i}
++ e_i.
+$$
+
+This allows each physician to have a different baseline.
+
+But every physician baseline is estimated separately.
+
+## What happens with `lm()`?
+
+Physicians with three or four visits can get extreme estimated baselines.
+
+Not because we learned something profound about those physicians.
+
+Because three observations are noisy.
+
+##  {.plain}
+
+![](assets/er-no-pooling.png){fig-alt="No-pooling physician estimates versus number of low-acuity visits. Small groups have much wider and more extreme estimates." width="95%"}
+
+## The mixed model idea
+
+Let each physician have a baseline offset:
+
+$$
+\log(\text{DispositionMinutes}_i)
+=
+\beta_0
++ \beta_1\text{Checklist}_i
++ a_{\text{Physician}_i}
++ e_i.
+$$
+
+Now add a model for the physician offsets:
+
+$$
+a_j \sim N(0, \sigma_a^2).
+$$
+
+That second line is the hierarchy.
+
+## Translation
+
+Each physician gets an intercept.
+
+But the intercepts are assumed to come from a common population of physicians.
+
+So the model asks two questions at once:
+
+- what is the average checklist effect?
+- how much do physicians differ in baseline disposition time?
+
+## In R
+
+``` r
+library(rstanarm)
+
+er_fit <- stan_lmer(
+  logDispositionMinutes ~ Checklist + (1 | Physician),
+  data = er_visits,
+  chains = 4,
+  iter = 2000,
+  seed = 382
+)
+```
+
+The term `(1 | Physician)` means:
+
+> give each physician a random intercept.
+
+## What changed?
+
+The checklist effect is about `-0.168` on the log scale.
+
+That means checklist visits reach a disposition decision about
+
+$$
+e^{-0.168} - 1 \approx -15\%
+$$
+
+faster, after accounting for physician baselines.
+
+The physician standard deviation is about `0.28` on the log scale.
+
+Physicians really do differ in baseline disposition time.
+
+## Partial pooling
+
+![](assets/er-partial-pooling.png){fig-alt="No-pooling and partial-pooling estimates for physician baselines. Small groups are pulled most toward the population average." width="95%"}
+
+## What the plot says
+
+Red: no pooling.
+
+Blue: partial pooling.
+
+The tiny-physician estimates move most.
+
+Large-physician estimates barely move.
+
+That is borrowing strength.
+
+## Three estimators {.smaller}
+
+No pooling:
+
+> every physician is their own island.
+
+Complete pooling:
+
+> physicians do not matter.
+
+Partial pooling:
+
+> physicians matter, but noisy physician estimates are stabilized by the population.
+
+## Bayesian logic
+
+The model has two levels.
+
+Observation level:
+
+$$
+y_i \mid a_j \sim N(\beta_0 + \beta_1x_i + a_j, \sigma^2).
+$$
+
+Group level:
+
+$$
+a_j \sim N(0, \sigma_a^2).
+$$
+
+The group-level distribution is the source of shrinkage.
+
+## Why this is Bayesian
+
+For a small group, its own data are weak.
+
+So the posterior estimate is influenced heavily by the population distribution.
+
+For a large group, its own data are strong.
+
+So the posterior estimate stays closer to the group-specific data.
+
+No magic. Just weighted evidence.
+
+## Random slopes
+
+Sometimes groups differ not only in baseline.
+
+They differ in how a predictor works.
+
+That is a random slope.
+
+## Case 2: document review {.smaller}
+
+A large law firm wants better billing estimates for document review.
+
+Every year, new associates and staff reviewers join matters with very different document loads.
+
+Each row here is one review assignment:
+
+- one reviewer,
+- one matter,
+- pages reviewed,
+- billed hours for document review.
+
+The business question:
+
+> If the assignment gets larger, how fast do billed hours grow?
+
+## First look at the scale
+
+Pages reviewed and billed hours both span orders of magnitude.
+
+That is not a detail. It changes the model.
+
+On the original scale, a 500-page assignment and a 50,000-page assignment do not belong in the same straight-line picture.
+
+##  {.plain}
+
+![](assets/legal-review-log-spans.png){fig-alt="Log-log scatterplot of billed hours versus pages reviewed for legal document-review assignments." width="95%"}
+
+## Why logs?
+
+On the log-log scale, the slope is an exponent:
+
+$$
+\log(\text{BilledHours})
+=
+\beta_0
++ \beta_1\log(\text{PagesReviewed})
++ e.
+$$
+
+If $\beta_1 = 1$, review time scales roughly linearly with pages.
+
+If $\beta_1 > 1$, review time scales a little faster than linearly.
+
+That is plausible here: large corpora require cross-referencing, issue coding, and connecting documents across the matter.
+
+## Why sparsity is real here {.smaller}
+
+Review histories are not balanced.
+
+- some reviewers do document review constantly,
+- some rotate through once,
+- new associates may have one or two prior assignments,
+- contract reviewers appear for one matter and disappear.
+
+In this sample: 185 reviewers and 3,489 assignments.
+
+The smallest reviewer history is 1 assignment.
+
+The largest is 90.
+
+##  {.plain}
+
+![](assets/legal-reviewer-counts.png){fig-alt="Histogram of legal document-review assignments per reviewer. Many reviewers have short histories and a few appear often." width="95%"}
+
+## The question {.smaller}
+
+Outcome:
+
+- `BilledHours`.
+
+Numerical predictor:
+
+- `PagesReviewed`.
+
+Group:
+
+- `ReviewerID`.
+
+More carefully:
+
+> Does the page-to-hours exponent vary by reviewer?
+
+## What goes wrong separately?
+
+Fit a separate page-count exponent for every reviewer.
+
+Reviewers with two or three assignments can get absurd slopes.
+
+Those slopes are mostly noise.
+
+##  {.plain}
+
+![](assets/legal-no-pooling-slopes.png){fig-alt="Separate reviewer page-count exponents versus assignments observed. Short-history reviewers have unstable slopes." width="95%"}
+
+## Random slope model
+
+We let both pieces vary by reviewer:
+
+$$
+\begin{aligned}
+\log(\text{BilledHours}_{ij})
+&= \beta_0
+ + \beta_1\log(\text{Pages}_{ij}) \\
+&\quad + \text{document and experience controls} \\
+&\quad + a_j + b_j\log(\text{Pages}_{ij}) + e_{ij}.
+\end{aligned}
+$$
+
+Reviewer `j` gets:
+
+- a baseline offset $a_j$,
+- a page-count slope offset $b_j$.
+
+## In R
+
+``` r
+legal_fit <- stan_lmer(
+  logBilledHours ~ logPagesCentered + DocumentType +
+    ExperienceLevel +
+    (1 + logPagesCentered | ReviewerID),
+  data = legal_review,
+  chains = 4,
+  iter = 2000,
+  seed = 382
+)
+```
+
+The term `(1 + logPagesCentered | ReviewerID)` means:
+
+> random reviewer baselines and random reviewer page-count slopes.
+
+## Partial pooling of slopes
+
+![](assets/legal-partial-pooling-slopes.png){fig-alt="Separate and partial-pooled reviewer page-count slopes. Short-history reviewer slopes are pulled toward the average slope." width="95%"}
+
+## Reading the model
+
+The average page-count exponent is about `1.05`.
+
+Roughly:
+
+> 10% more pages predicts about 10.5% more billed hours.
+
+That is slightly superlinear scaling.
+
+The reviewer-level slope standard deviation is about `0.14`.
+
+So the page-count penalty really varies across reviewers.
+
+## Case 3: Spredfast {.smaller}
+
+Now the same random-slope idea, but with a count outcome.
+
+Spredfast, in its Austin glory days, sold social media management software to brands, agencies, and media companies.
+
+Customers used it to coordinate publishing, approvals, engagement, analytics, and brand governance across social channels.
+
+Each row here is one customer-month.
+
+The business question:
+
+> As an account adds active seats, how much does support burden grow?
+
+## Why sparsity is real here
+
+This is not a balanced experiment.
+
+It is a SaaS customer panel.
+
+- new customers enter,
+- pilots end,
+- accounts churn,
+- enterprise customers stay for years,
+- a few huge customers dominate the queue.
+
+Some accounts have 70 months of history.
+
+Some have 3.
+
+##  {.plain}
+
+![](assets/spredfast-account-months.png){fig-alt="Histogram of customer-months per Spredfast account. Many accounts have short histories and a few have long histories." width="95%"}
+
+## The question {.smaller}
+
+Outcome:
+
+- `MonthlyTickets`: support tickets from the account that month.
+
+Numerical predictor:
+
+- `ActiveSeats`: active seats in the account-month.
+
+Group:
+
+- `AccountID`.
+
+More carefully:
+
+> Does the seat-to-ticket slope vary by account?
+
+## What goes wrong separately?
+
+Fit a separate seat-to-ticket slope for every account.
+
+Small-history accounts can look weirdly quiet or wildly support-heavy.
+
+Those slopes are mostly noise.
+
+##  {.plain}
+
+![](assets/spredfast-no-pooling-slopes.png){fig-alt="Separate account log-seat slopes versus customer-months observed. Short-history accounts have unstable slopes." width="95%"}
+
+## Count outcome
+
+Tickets are counts.
+
+So use a Poisson GLMM:
+
+$$
+\text{Tickets}_{ij} \sim \text{Poisson}(\lambda_{ij}).
+$$
+
+Then model the log mean:
+
+$$
+\log(\lambda_{ij})
+=
+\beta_0
++ \beta_1\log(\text{Seats}_{ij})
++ a_j
++ b_j\log(\text{Seats}_{ij})
++ \text{controls}.
+$$
+
+Now account `j` gets its own baseline and its own seat slope.
+
+## In R
+
+``` r
+spredfast_fit <- stan_glmer(
+  MonthlyTickets ~ logActiveSeatsCentered + PlanTier +
+    AccountType + ConnectedProfiles10 + MonthsSinceLaunch12 +
+    (1 + logActiveSeatsCentered | AccountID),
+  data = spredfast,
+  family = poisson(link = "log"),
+  chains = 4,
+  iter = 2000,
+  seed = 382
+)
+```
+
+The term `(1 + logActiveSeatsCentered | AccountID)` means:
+
+> random account baselines and random account seat slopes.
+
+## Partial pooling of slopes
+
+![](assets/spredfast-partial-pooling-slopes.png){fig-alt="Separate and partial-pooled account seat slopes. Short-history account slopes are pulled toward the average slope." width="95%"}
+
+## Reading the model
+
+The average log-seat slope is about `0.76`.
+
+Roughly:
+
+> a 1% increase in active seats predicts about a 0.76% increase in monthly tickets.
+
+The account-level slope standard deviation is about `0.45`.
+
+So the support burden of growth really varies across accounts.
+
+## But check the Poisson assumption
+
+For a Poisson model:
+
+$$
+\text{variance} = \text{mean}.
+$$
+
+That is a strong promise.
+
+Support tickets often break it.
+
+Some months are just weird: product incidents, platform API changes, major launches, new workflows.
+
+## Mean-variance check
+
+![](assets/spredfast-mean-variance.png){fig-alt="Observed ticket variance by fitted mean bin. The observed variance is above the Poisson variance equals mean line, and closer to a Poisson-lognormal curve." width="95%"}
+
+## Overdispersion
+
+The fitted Poisson model has a Pearson overdispersion ratio around `2.15`.
+
+The data are more variable than a plain Poisson model expects.
+
+One simple fix (the negative binomial from the GLM module is the other standard one):
+
+> add an observation-level random effect.
+
+## Poisson-lognormal model
+
+Add one random intercept per row:
+
+$$
+\log(\lambda_i)
+=
+\text{linear predictor}_i
++ u_i,
+\qquad
+u_i \sim N(0, \sigma_u^2).
+$$
+
+That is a Poisson-lognormal model.
+
+## In R
+
+``` r
+spredfast_olre <- stan_glmer(
+  MonthlyTickets ~ logActiveSeatsCentered + PlanTier +
+    AccountType + ConnectedProfiles10 + MonthsSinceLaunch12 +
+    (1 + logActiveSeatsCentered | AccountID) +
+    (1 | ObsID),
+  data = spredfast,
+  family = poisson(link = "log")
+)
+```
+
+The `(1 | ObsID)` term gives the Poisson model extra row-level variation.
+
+## Why industry uses these models
+
+- **Borrowing strength**: sparse groups get stabilized by the population.
+- **Group dependencies**: same-group observations are not independent clones.
+- **Unbalanced data**: different group sizes are not a problem.
+- **Generalizability**: effects are estimated for groups we will see again.
+
+## The practical lesson
+
+When there are many groups and uneven data:
+
+- pooled regression is too blunt,
+- dummy-variable regression is too noisy,
+- mixed models are often the useful middle.
+
+The slogan:
+
+> estimate the group differences, but do not trust tiny groups too much.

@@ -1,0 +1,3 @@
+term,df.residual,rss,df,sumsq,statistic,p.value
+recovered_revenue_7d ~ (incentive + subject + send_delay)^2,6590,3284222.3327446617,NA,NA,NA,NA
+recovered_revenue_7d ~ incentive * subject * send_delay,6588,3283286.8254256384,2,935.507319023367,0.9385598251725948,0.3912431134912493
